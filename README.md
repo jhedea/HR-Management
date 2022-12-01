@@ -1,4 +1,4 @@
-# Lab Template
+# HR management
 
 This template contains two microservices:
 - authentication-microservice
