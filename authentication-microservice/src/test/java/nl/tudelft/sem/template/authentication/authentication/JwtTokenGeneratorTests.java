@@ -25,10 +25,11 @@ public class JwtTokenGeneratorTests {
 
     // Secret needs to be at least 512 bits long and base64 encoded
     // In this case: TEST_SECRET_TEST_SECRET_TEST_SECRET_TEST_SECRET_TEST_SECRET12345 -> base64
-    private final String secret = "VEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVQxMjM0NQ==";
+    private final transient String secret =
+            "VEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVRfVEVTVF9TRUNSRVQxMjM0NQ==";
 
-    private String netId = "andy";
-    private UserDetails user;
+    private final transient String netId = "andy";
+    private transient UserDetails user;
 
     /**
      * Set up mocks.

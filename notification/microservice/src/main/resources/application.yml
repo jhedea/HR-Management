@@ -1,0 +1,30 @@
+# Port of the microservice
+server:
+  port: 8085
+
+spring:
+  application:
+    name: NOTIFICATION-SERVICE
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+springdoc:
+  swagger-ui:
+    enabled: true
+
+mail:
+  host: smtp.gmail.com
+  port: 587
+  username: test@gmail.com
+  password: test
+  protocol: smtp
+  smtp:
+    auth: true
+    starttls:
+      enable: true
+  debug: true

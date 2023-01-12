@@ -1,13 +1,21 @@
 package nl.tudelft.sem.template.authentication.domain.user;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.NoArgsConstructor;
+import nl.tudelft.sem.template.authentication.authentication.AuthoritiesApi;
+import nl.tudelft.sem.template.authentication.authentication.Authority;
 import nl.tudelft.sem.template.authentication.domain.HasEvents;
+import org.hibernate.annotations.GenericGenerator;
+
+
 
 /**
  * A DDD entity representing an application user in our domain.
@@ -20,21 +28,28 @@ public class AppUser extends HasEvents {
      * Identifier for the application user.
      */
     @Id
-    @Column(name = "id", nullable = false)
-    private int id;
-
+    @GeneratedValue(strategy = javax.persistence.GenerationType.AUTO, generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
+    )
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
     @Column(name = "net_id", nullable = false, unique = true)
     @Convert(converter = NetIdAttributeConverter.class)
     private NetId netId;
-
     @Column(name = "password_hash", nullable = false)
     @Convert(converter = HashedPasswordAttributeConverter.class)
     private HashedPassword password;
+    @Column(name = "role", nullable = false)
+    private Role role = Role.EMPLOYEE;
+    private transient List<Authority> authorityList;
+
 
     /**
      * Create new application user.
      *
-     * @param netId The NetId for the new user
+     * @param netId    The NetId for the new user
      * @param password The password for the new user
      */
     public AppUser(NetId netId, HashedPassword password) {
@@ -68,11 +83,26 @@ public class AppUser extends HasEvents {
             return false;
         }
         AppUser appUser = (AppUser) o;
-        return id == (appUser.id);
+        return id.equals(appUser.id);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(netId);
     }
+
+    public List<Authority> getAuthorityList() {
+        return AuthoritiesApi.getAuthoritiesUser(this);
+    }
+
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void modifyRole(Role newRole) {
+        this.role = newRole;
+    }
+
+
 }

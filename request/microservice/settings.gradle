@@ -1,0 +1,4 @@
+rootProject.name = 'request-microservice'
+
+include 'contract:commons'
+include 'contract:client'

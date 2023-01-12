@@ -1,4 +1,4 @@
-image: gradle:6.7-jdk15
+image: gradle:7-jdk11-focal
 
 stages:
   - build
@@ -15,18 +15,24 @@ build-authentication-microservice:
     gradle authentication-microservice:assemble authentication-microservice:testClasses
 
 checkStyle-authentication-microservice:
+  needs:
+    - build-authentication-microservice
   stage: staticAnalysis
   script:
     gradle authentication-microservice:checkstyleMain authentication-microservice:checkStyleTest
   allow_failure: true
 
 PMD-authentication-microservice:
+  needs:
+    - build-authentication-microservice
   stage: staticAnalysis
   script:
     gradle authentication-microservice:pmdMain
   allow_failure: true
 
 test-authentication-microservice:
+  needs:
+    - build-authentication-microservice
   stage: test
   script:
     - gradle authentication-microservice:test authentication-microservice:jacocoTestReport

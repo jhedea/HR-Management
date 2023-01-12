@@ -31,7 +31,7 @@ public class JwtTokenGenerator {
      */
     private final transient TimeProvider timeProvider;
 
-    // automatically loads jwt.secret from resources/application.properties
+    // automatically loads jwt.secret from resources/application.yml
     @Autowired
     public JwtTokenGenerator(TimeProvider timeProvider, @Value("${jwt.secret}") String jwtSecret) {
         this.timeProvider = timeProvider;
@@ -46,6 +46,7 @@ public class JwtTokenGenerator {
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", userDetails.getAuthorities());
         return Jwts.builder().setClaims(claims).setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(timeProvider.getCurrentTime().toEpochMilli()))
                 .setExpiration(new Date(timeProvider.getCurrentTime().toEpochMilli() + JWT_TOKEN_VALIDITY))

@@ -3,28 +3,39 @@ package nl.tudelft.sem.template.authentication.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import nl.tudelft.sem.template.authentication.authentication.JwtTokenGenerator;
+import nl.tudelft.sem.template.authentication.domain.providers.implementations.ClientProvider;
 import nl.tudelft.sem.template.authentication.domain.user.AppUser;
 import nl.tudelft.sem.template.authentication.domain.user.HashedPassword;
 import nl.tudelft.sem.template.authentication.domain.user.NetId;
 import nl.tudelft.sem.template.authentication.domain.user.Password;
 import nl.tudelft.sem.template.authentication.domain.user.PasswordHashingService;
+import nl.tudelft.sem.template.authentication.domain.user.Role;
 import nl.tudelft.sem.template.authentication.domain.user.UserRepository;
 import nl.tudelft.sem.template.authentication.framework.integration.utils.JsonUtil;
 import nl.tudelft.sem.template.authentication.models.AuthenticationRequestModel;
 import nl.tudelft.sem.template.authentication.models.AuthenticationResponseModel;
 import nl.tudelft.sem.template.authentication.models.RegistrationRequestModel;
+import nl.tudelft.sem.user.client.UserClient;
+import nl.tudelft.sem.user.client.UserClientConfiguration;
+import nl.tudelft.sem.user.client.UserData;
+import nl.tudelft.sem.user.commons.entities.utils.UserDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,6 +46,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+
+
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -58,6 +71,9 @@ public class UsersTests {
     @Autowired
     private transient UserRepository userRepository;
 
+    @Mock
+    private transient ClientProvider clientProvider;
+
     @Test
     public void register_withValidData_worksCorrectly() throws Exception {
         // Arrange
@@ -69,6 +85,24 @@ public class UsersTests {
         RegistrationRequestModel model = new RegistrationRequestModel();
         model.setNetId(testUser.toString());
         model.setPassword(testPassword.toString());
+
+        UserClient userClient = mock(UserClient.class);
+        UserData userData = mock(UserData.class);
+        when(clientProvider.userClient()).thenReturn(userClient);
+        when(userClient.user()).thenReturn(userData);
+
+        UserDto userDto = UserDto.builder().build();
+        userDto.setRole(nl.tudelft.sem.user.commons.entities.utils.Role.EMPLOYEE);
+        userDto.setPhoneNumber("");
+        userDto.setLastName("");
+        userDto.setFirstName("");
+        userDto.setEmail("");
+        userDto.setNetId("SomeUser");
+        userDto.setDescription("");
+        userDto.setAddress("");
+        userDto.setId(UUID.randomUUID());
+
+        when(userData.createUser(any())).thenReturn(CompletableFuture.completedFuture(userDto));
 
         // Act
         ResultActions resultActions = mockMvc.perform(post("/register")
@@ -122,15 +156,16 @@ public class UsersTests {
 
         when(mockAuthenticationManager.authenticate(argThat(authentication ->
                 !testUser.toString().equals(authentication.getPrincipal())
-                    || !testPassword.toString().equals(authentication.getCredentials())
+                        || !testPassword.toString().equals(authentication.getCredentials())
         ))).thenThrow(new UsernameNotFoundException("User not found"));
 
         final String testToken = "testJWTToken";
         when(mockJwtTokenGenerator.generateToken(
-            argThat(userDetails -> userDetails.getUsername().equals(testUser.toString())))
+                argThat(userDetails -> userDetails.getUsername().equals(testUser.toString())))
         ).thenReturn(testToken);
 
         AppUser appUser = new AppUser(testUser, testHashedPassword);
+        appUser.modifyRole(Role.ADMIN);
         userRepository.save(appUser);
 
         AuthenticationRequestModel model = new AuthenticationRequestModel();
@@ -155,7 +190,7 @@ public class UsersTests {
 
         verify(mockAuthenticationManager).authenticate(argThat(authentication ->
                 testUser.toString().equals(authentication.getPrincipal())
-                    && testPassword.toString().equals(authentication.getCredentials())));
+                        && testPassword.toString().equals(authentication.getCredentials())));
     }
 
     @Test
@@ -166,7 +201,7 @@ public class UsersTests {
 
         when(mockAuthenticationManager.authenticate(argThat(authentication ->
                 testUser.equals(authentication.getPrincipal())
-                    && testPassword.equals(authentication.getCredentials())
+                        && testPassword.equals(authentication.getCredentials())
         ))).thenThrow(new UsernameNotFoundException("User not found"));
 
         AuthenticationRequestModel model = new AuthenticationRequestModel();
@@ -183,7 +218,7 @@ public class UsersTests {
 
         verify(mockAuthenticationManager).authenticate(argThat(authentication ->
                 testUser.equals(authentication.getPrincipal())
-                    && testPassword.equals(authentication.getCredentials())));
+                        && testPassword.equals(authentication.getCredentials())));
 
         verify(mockJwtTokenGenerator, times(0)).generateToken(any());
     }
@@ -199,7 +234,7 @@ public class UsersTests {
 
         when(mockAuthenticationManager.authenticate(argThat(authentication ->
                 testUser.equals(authentication.getPrincipal())
-                    && wrongPassword.equals(authentication.getCredentials())
+                        && wrongPassword.equals(authentication.getCredentials())
         ))).thenThrow(new BadCredentialsException("Invalid password"));
 
         AppUser appUser = new AppUser(new NetId(testUser), testHashedPassword);
@@ -219,7 +254,7 @@ public class UsersTests {
 
         verify(mockAuthenticationManager).authenticate(argThat(authentication ->
                 testUser.equals(authentication.getPrincipal())
-                    && wrongPassword.equals(authentication.getCredentials())));
+                        && wrongPassword.equals(authentication.getCredentials())));
 
         verify(mockJwtTokenGenerator, times(0)).generateToken(any());
     }

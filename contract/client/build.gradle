@@ -1,0 +1,112 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        //Needed only for SNAPSHOT versions
+        //maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    }
+    dependencies {
+        classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.9.0'
+    }
+}
+
+plugins {
+    id 'java'
+    // Test coverage
+    id 'jacoco'
+
+    // Code style
+    id 'checkstyle'
+
+    // PMD
+    id 'pmd'
+
+    // PITest
+    id 'info.solidsoft.pitest' version '1.9.0'
+}
+
+archivesBaseName = 'contract-client'
+group = 'nl.tudelft.sem.contract'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(path: ':contract:commons')
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+
+
+    testImplementation 'org.apache.commons:commons-lang3:3.12.0'
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
+    testImplementation('org.junit.jupiter:junit-jupiter:5.9.1')
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.9.0'
+    testImplementation('org.assertj:assertj-core:3.23.1')
+}
+
+configurations {
+    testImplementation.extendsFrom compileOnly
+}
+
+test {
+    useJUnitPlatform()
+    jacoco {
+        enabled = true
+        includes = ['nl.tudelft.sem.contract.*']
+        excludes = []
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+jacocoTestCoverageVerification() {
+    dependsOn test
+    violationRules {
+        rule {
+            enabled = true
+            element = 'CLASS'
+            includes = ['nl.tudelft.sem.contract.*']
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.1
+            }
+        }
+    }
+}
+
+checkstyle {
+    toolVersion "10.4"
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    ignoreFailures = false
+    maxErrors = 0
+    maxWarnings = 0
+}
+
+pmd {
+    incrementalAnalysis = true
+    sourceSets = [sourceSets.main]
+}
+
+apply plugin: 'info.solidsoft.pitest'
+pitest {
+    //adds dependency to org.pitest:pitest-junit5-plugin and sets "testPlugin" to "junit5"
+    junit5PluginVersion = '1.1'
+
+    targetClasses = ['nl.tudelft.sem.contract.*']  //by default "${project.group}.*"
+    pitestVersion = '1.9.0' //not needed when a default PIT version should be used
+    threads = 4
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+}

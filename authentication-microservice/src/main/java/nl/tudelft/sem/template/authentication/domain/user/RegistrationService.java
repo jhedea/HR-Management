@@ -30,10 +30,10 @@ public class RegistrationService {
      */
     public AppUser registerUser(NetId netId, Password password) throws Exception {
 
-        if (checkNetIdIsUnique(netId)) {
+        if (checkNetIdIsUnique(netId) && checkNetIdLength(netId) && !netId.toString().isBlank()) {
             // Hash password
             HashedPassword hashedPassword = passwordHashingService.hash(password);
-
+            System.out.println(hashedPassword);
             // Create new account
             AppUser user = new AppUser(netId, hashedPassword);
             userRepository.save(user);
@@ -42,6 +42,10 @@ public class RegistrationService {
         }
 
         throw new NetIdAlreadyInUseException(netId);
+    }
+
+    public boolean checkNetIdLength(NetId netId) {
+        return netId.toString().length() < 20;
     }
 
     public boolean checkNetIdIsUnique(NetId netId) {

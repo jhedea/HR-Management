@@ -1,0 +1,185 @@
+package nl.tudelft.sem.user.microservice.controllers.internal;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import nl.tudelft.sem.user.commons.entities.utils.Role;
+import nl.tudelft.sem.user.commons.entities.utils.RoleDto;
+import nl.tudelft.sem.user.commons.entities.utils.UserDto;
+import nl.tudelft.sem.user.commons.entities.utils.UserModify;
+import nl.tudelft.sem.user.microservice.authentication.AuthManager;
+import nl.tudelft.sem.user.microservice.database.entities.utils.UserEntity;
+import nl.tudelft.sem.user.microservice.exceptions.ActionNotAllowedException;
+import nl.tudelft.sem.user.microservice.exceptions.UserNotFoundException;
+import nl.tudelft.sem.user.microservice.service.UserService;
+import nl.tudelft.sem.user.microservice.userapi.UserEntityRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@RestController
+@RequestMapping("/internal/user")
+public class UserController {
+    private final transient UserEntityRepository userEntityRepository;
+    private final transient UserService userService;
+    private final transient AuthManager authManager;
+
+    /**
+     * Constructor.
+     *
+     * @param userEntityRepository repo of User entities
+     * @param userService for different operations
+     * @param authManager to retrieve NetId of user
+     */
+    public UserController(UserEntityRepository userEntityRepository, UserService userService, AuthManager authManager) {
+        this.userEntityRepository = userEntityRepository;
+        this.userService = userService;
+        this.authManager = authManager;
+    }
+
+
+    /**
+     * Get a user by its id.
+     *
+     * @param id the id of the user
+     * @return the user with the given id
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUserDetail(@PathVariable String id) {
+        UserEntity user = userEntityRepository.findById(UUID.fromString(id)).orElseThrow(UserNotFoundException::new);
+        UserDto userDto = user.getDto();
+        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+    }
+
+    /**
+     * Get a role of the user by its id.
+     *
+     * @param id the id of the user
+     * @return the role of the user with the given id
+     */
+    @GetMapping("/getRoleByUUID/{id}")
+    public ResponseEntity<Role> getRoleByUuid(@PathVariable String id) {
+        return ResponseEntity.ok(userEntityRepository
+                .findById(UUID.fromString(id)).orElseThrow(UserNotFoundException::new).getRole());
+    }
+
+    /**
+     * Get a role of the user by its NetId.
+     *
+     * @param netId the id of the user
+     * @return the role of the user with the given id
+     */
+    @GetMapping("/getRoleByNetId/{netId}")
+    public ResponseEntity<Role> getRoleByNetId(@PathVariable String netId) {
+        return ResponseEntity.ok(userEntityRepository
+                .findByNetId(netId).orElseThrow(UserNotFoundException::new).getRole());
+    }
+
+    /**
+     * Returns UUID of the user based on netId.
+     *
+     * @param netId of User
+     * @return UUID
+     */
+    @GetMapping("/getUUID/{netId}")
+    public ResponseEntity<UUID> getUuid(@PathVariable String netId) {
+
+        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getId());
+    }
+
+    /**
+     * Returns the user's DTO object.
+     *
+     * @param netId of user
+     * @return DTO object
+     */
+    @GetMapping("/getUserDto/{netId}")
+    public ResponseEntity<UserDto> getUserDto(@PathVariable String netId) {
+        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getDto());
+    }
+
+    /**
+     * Gets example by id.
+     *
+     * @return the example found in the database with the given id
+     */
+    @GetMapping("/getUser/{netId}")
+    public ResponseEntity<UserDto> getNetId(@PathVariable String netId) {
+        UserEntity user = userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new);
+        UserDto userDto = user.getDto();
+        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+    }
+
+    /**
+     * API endpoint for retrieving NetIds.
+     *
+     * @return Returns all the NetIds in the database.
+     */
+    @GetMapping("/getAllNetIds")
+    public ResponseEntity<List<String>> getAllNetIds() {
+
+        List<UserEntity> netIds = userEntityRepository.findAll();
+        return new ResponseEntity<List<String>>(netIds.stream().map(UserEntity::getNetId)
+                .collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    /**
+     * saves User as an empty entity with only the username.
+     *
+     * @return ok.
+     */
+    @PostMapping("/saveUser/{netId}")
+    public ResponseEntity<UserDto> createUser(@PathVariable String netId) {
+        System.out.println(1);
+        UserEntity user;
+
+        // this way the first User created in the constructor is an ADMIN
+        if (netId.equals("ADMIN")) {
+            user = new UserEntity(netId, Role.ADMIN, "", "", "", "", "", "");
+        } else {
+            user = new UserEntity(netId, Role.CANDIDATE, "", "", "", "", "", "");
+        }
+        userService.addUser(user);
+        return new ResponseEntity<UserDto>(user.getDto(), HttpStatus.OK);
+    }
+    /*
+    @GetMapping("/getUUIDbasedOnTheNetId/{netId}")
+    public ResponseEntity<UUID> getUuidByNetId(@PathVariable String netId) {
+        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getId());
+    }
+    */
+
+    /**
+     * updates User with all attributes through a JSON format of the UserDto.
+     *
+     * @return ok or throws exception if user was not found
+     */
+    @PostMapping("/updateUser")
+    public ResponseEntity<UserDto> updateUser(@Valid @RequestBody UserModify update) {
+        try {
+            UserEntity user = userEntityRepository
+                    .findByNetId(authManager.getNetId())
+                    .orElseThrow(UserNotFoundException::new);
+            Role role = user.getRole();
+            System.out.println(role.toString());
+            if (!(role.equals(Role.ADMIN) || role.equals(Role.HR))) {
+                throw new ActionNotAllowedException(){};
+            }
+            UserEntity userUpdated = userService.updateUser(update);
+            UserDto userDto = userUpdated.getDto();
+            return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new UserNotFoundException("The user you are trying to update was not found");
+        }
+
+    }
+
+}

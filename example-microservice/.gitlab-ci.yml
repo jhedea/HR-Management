@@ -1,4 +1,4 @@
-image: gradle:6.7-jdk15
+image: gradle:7-jdk11-focal
 
 stages:
   - build
@@ -15,6 +15,8 @@ build-example-microservice:
     gradle example-microservice:assemble example-microservice:testClasses
 
 checkStyle-example-microservice:
+  needs:
+    - build-example-microservice
   stage: staticAnalysis
   script:
     gradle example-microservice:checkstyleMain example-microservice:checkStyleTest
@@ -22,12 +24,16 @@ checkStyle-example-microservice:
 
 
 PMD-example-microservice:
+  needs:
+    - build-example-microservice
   stage: staticAnalysis
   script:
     gradle example-microservice:pmdMain
   allow_failure: true
 
 test-example-microservice:
+  needs:
+    - build-example-microservice
   stage: test
   script:
     - gradle example-microservice:test example-microservice:jacocoTestReport

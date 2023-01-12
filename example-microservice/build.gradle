@@ -5,13 +5,13 @@ buildscript {
 		//maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 	}
 	dependencies {
-		classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.5.2'
+		classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.9.0'
 	}
 }
 
 plugins {
-	id 'org.springframework.boot' version '2.3.5.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id 'org.springframework.boot' version '2.7.6'
+	id 'io.spring.dependency-management' version '1.1.0'
 	id 'java'
 	// Test coverage
 	id 'jacoco'
@@ -23,7 +23,7 @@ plugins {
 	id 'pmd'
 
 	// PITest
-	id 'info.solidsoft.pitest' version '1.5.2'
+	id 'info.solidsoft.pitest' version '1.9.0'
 }
 
 group = 'nl.tudelft.cse.sem.template'
@@ -51,6 +51,10 @@ dependencies {
 	runtimeOnly 'org.bouncycastle:bcprov-jdk15on:1.70'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
+	// OpenAPI documentation
+	// XXX: if it starts breaking, remove. For convenience only (for now).
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'
+	implementation 'org.springdoc:springdoc-openapi-security:1.6.13'
 
 	// Local test database (in-memory)
 	implementation 'com.h2database:h2'
@@ -59,8 +63,8 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
-	testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.12.4'
+	testImplementation('org.junit.jupiter:junit-jupiter:5.9.1')
+	testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.9.0'
 	testImplementation('org.assertj:assertj-core:3.23.1')
 }
 
@@ -99,7 +103,7 @@ jacocoTestCoverageVerification() {
 }
 
 checkstyle {
-	toolVersion "8.37"
+	toolVersion "10.4"
 	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
 	ignoreFailures = false
 	maxErrors = 0
@@ -114,10 +118,10 @@ pmd {
 apply plugin: 'info.solidsoft.pitest'
 pitest {
 	//adds dependency to org.pitest:pitest-junit5-plugin and sets "testPlugin" to "junit5"
-	junit5PluginVersion = '0.12'
+	junit5PluginVersion = '1.1'
 
 	targetClasses = ['nl.tudelft.sem.template.*']  //by default "${project.group}.*"
-	pitestVersion = '1.5.1' //not needed when a default PIT version should be used
+	pitestVersion = '1.9.0' //not needed when a default PIT version should be used
 	threads = 4
 	outputFormats = ['XML', 'HTML']
 	timestampedReports = false

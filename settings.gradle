@@ -1,4 +1,23 @@
-rootProject.name = 'template'
+rootProject.name = 'sem'
 
 include 'authentication-microservice'
 include 'example-microservice'
+
+include 'contract:microservice'
+include 'contract:commons'
+include 'contract:client'
+
+include 'user:microservice'
+include 'user:commons'
+include 'user:client'
+
+include 'notification:commons'
+include 'notification:client'
+include 'notification:microservice'
+
+include 'request:client'
+include 'request:commons'
+include 'request:microservice'
+
+include 'gateway:router'
+include 'gateway:registry'
