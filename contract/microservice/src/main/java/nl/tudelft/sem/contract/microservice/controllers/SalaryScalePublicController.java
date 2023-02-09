@@ -60,7 +60,7 @@ public class SalaryScalePublicController {
      * @param salaryScaleDto salary scale to be added
      * @return added salary scale
      */
-    @PostMapping
+    @PostMapping("")
     ResponseEntity<SalaryScaleDto> addSalaryScale(@RequestBody SalaryScaleDto salaryScaleDto) {
         if (!authenticationService.hasAtLeastRole(Role.HR)) {
             throw new ActionNotAllowedException("You are not allowed to add a salary scale");
@@ -118,5 +118,4 @@ public class SalaryScalePublicController {
         SalaryScale salaryScale = salaryScaleRepository.findById(id).orElseThrow(SalaryScaleNotFoundException::new);
         return ResponseEntity.ok(salaryScaleService.editMaximumPay(salaryScale, maximumPay).getDto());
     }
-
 }

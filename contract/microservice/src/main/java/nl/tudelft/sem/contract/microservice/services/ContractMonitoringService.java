@@ -33,9 +33,10 @@ public class ContractMonitoringService {
         List<Contract> eligibleContracts = contractRepository
                 .findContractEligibleForSalaryScaleIncrease(LocalDate.now().minusMonths(12));
         for (Contract contract : eligibleContracts) {
-            contract.setSalaryScalePoint(BigDecimal.ONE.min(contract.getSalaryScalePoint().add(
+            contract.getContractTerms().setSalaryScalePoint(BigDecimal.ONE.min(
+                    contract.getContractTerms().getSalaryScalePoint().add(
                                     contract.getJobPosition().getSalaryScale().getStep())));
-            contract.setLastSalaryIncreaseDate(LocalDate.now());
+            contract.getContractTerms().setLastSalaryIncreaseDate(LocalDate.now());
             try {
                 contractRepository.save(contract);
             } catch (Exception e) {
@@ -54,13 +55,13 @@ public class ContractMonitoringService {
             try {
                 UuidDto msgId = notificationClient.notification().sendMessage(
                         MessageDto.builder()
-                                .setUserId(contract.getEmployeeId())
+                                .setUserId(contract.getContractParties().getEmployeeId())
                                 .setPriority(MessagePriority.MEDIUM)
                                 .setSubject("Contract expiration")
                                 .setMessage("Your contract is about to expire.")
                                 .build()).join();
                 log.info("Sent contract expiration notification to user {} with message id {}",
-                        contract.getEmployeeId(), msgId);
+                        contract.getContractParties().getEmployeeId(), msgId);
             } catch (Exception e) {
                 log.error("Failed to send contract expiration notification for contract with id {}", contract.getId(), e);
             }

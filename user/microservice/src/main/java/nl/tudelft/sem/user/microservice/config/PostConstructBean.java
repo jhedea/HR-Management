@@ -2,20 +2,16 @@ package nl.tudelft.sem.user.microservice.config;
 
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import nl.tudelft.sem.template.authentication.domain.user.AppUser;
-import nl.tudelft.sem.template.authentication.domain.user.HashedPassword;
-import nl.tudelft.sem.template.authentication.domain.user.NetId;
-import nl.tudelft.sem.template.authentication.domain.user.UserRepository;
 import nl.tudelft.sem.user.commons.entities.utils.Role;
-import nl.tudelft.sem.user.microservice.database.entities.utils.UserEntity;
+import nl.tudelft.sem.user.microservice.database.entities.UserEntity;
 import nl.tudelft.sem.user.microservice.userapi.UserEntityRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 public class PostConstructBean {
-
     private final transient UserEntityRepository userRepository;
 
     /**
@@ -25,24 +21,29 @@ public class PostConstructBean {
      */
     @Autowired
     public PostConstructBean(UserEntityRepository userRepository) {
-
         this.userRepository = userRepository;
     }
 
     /**
      * Initialization of ADMIN.
      *
-     * @throws Exception in case registration fails
      */
     @PostConstruct
-    public void initializeAdmin() throws Exception {
-
+    public void initializeAdmin() {
         try {
-            UserEntity initUser = new UserEntity("ADMIN", Role.ADMIN, "", "IT guy",
-                    "Administration", "User", "", "");
+            UserEntity initUser = new UserEntity("ADMIN",
+                    Role.ADMIN,
+                    "",
+                    "IT guy",
+                    "Administration",
+                    "User",
+                    "",
+                    "");
             userRepository.save(initUser);
+        } catch (ConstraintViolationException e) {
+            log.warn("ADMIN already exists");
         } catch (Exception e) {
-            log.error("ADMIN already exists", e);
+            log.error("Failed to initialize ADMIN", e);
         }
     }
 }

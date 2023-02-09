@@ -35,6 +35,9 @@ public class RoutingService {
     public RouteLocator configureRoute(RouteLocatorBuilder builder) {
         RouteLocatorBuilder.Builder routeBuilder = builder.routes();
         routeBuilder = addRoute(routeBuilder, "contract", "contract", "lb://CONTRACT-SERVICE");
+        routeBuilder = addRoute(routeBuilder, "notification", "notification", "lb://NOTIFICATION-SERVICE");
+        routeBuilder = addRoute(routeBuilder, "user", "user", "lb://USER-SERVICE");
+        routeBuilder = addRoute(routeBuilder, "request", "request", "lb://REQUEST-SERVICE");
         return routeBuilder.build();
     }
 }

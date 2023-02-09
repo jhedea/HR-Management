@@ -71,5 +71,4 @@ public class PensionSchemePublicController {
         pensionSchemeRepository.save(pensionScheme);
         return ResponseEntity.ok(pensionScheme.getDto());
     }
-
 }

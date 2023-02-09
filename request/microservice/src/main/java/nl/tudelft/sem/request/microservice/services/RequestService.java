@@ -5,16 +5,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import javax.validation.Valid;
 import lombok.NonNull;
 import nl.tudelft.sem.contract.client.ContractClient;
-import nl.tudelft.sem.contract.commons.entities.ContractDto;
 import nl.tudelft.sem.contract.commons.entities.ContractModificationDto;
 import nl.tudelft.sem.request.commons.entities.RequestStatus;
-import nl.tudelft.sem.request.commons.entities.RequestType;
-import nl.tudelft.sem.request.microservice.database.entities.Request;
+import nl.tudelft.sem.request.microservice.database.entities.GeneralRequest;
 import nl.tudelft.sem.request.microservice.database.repositories.RequestRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -48,12 +44,8 @@ public class RequestService {
      * @param responseBody message that comes along with the rejection
      * @return request with modified attributes
      */
-    public Request rejectRequest(Request request, String responseBody) {
-
-        request.setResponseBody(responseBody);
-        request.setResponseDate(LocalDateTime.now());
-        request.setStatus(RequestStatus.REJECTED);
-
+    public GeneralRequest rejectRequest(GeneralRequest request, String responseBody) {
+        request.rejectRequest(responseBody);
         requestRepository.save(request);
         return request;
     }
@@ -64,39 +56,8 @@ public class RequestService {
      * @param request request to be approved
      * @return request with modified attributes
      */
-    public Request approveRequest(Request request) {
-
-        if (request.getRequestType() == RequestType.VACATION) {
-            CompletableFuture<ContractDto> c = contractClient.contract().getContract(request.getContractId());
-            try {
-                if (c.get().getVacationDays() < request.getNumberOfDays()) {
-                    return rejectRequest(request, "You don't have enough remaining vacation days.");
-                } else {
-                    contractClient.contract().getContract(request.getContractId())
-                            .get().setVacationDays(c.get().getVacationDays() - request.getNumberOfDays());
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
-            if (request.getRequestType() == RequestType.TERMINATION) {
-                contractClient.contract().terminateContract(request.getContractId());
-            }
-
-        } else if(request.getRequestType() == RequestType.MODIFY) {
-            String[] body = request.getRequestBody().toString().split(",\n");
-
-            try {
-                UUID id = UUID.fromString(body[0]);
-                ContractModificationDto modDto = mapper.readValue(body[1], ContractModificationDto.class);
-
-                CompletableFuture<ContractDto> c = contractClient.contract().modifyContract(id, modDto);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        request.setResponseDate(LocalDateTime.now());
-        request.setStatus(RequestStatus.APPROVED);
-
+    public GeneralRequest approveRequest(GeneralRequest request) {
+        request.approveRequest(contractClient, this);
         requestRepository.save(request);
         return request;
     }
@@ -108,10 +69,10 @@ public class RequestService {
      * @param modifications Modifications done to the draft contract.
      * @return The Request Entry
      */
-    public Optional<Request> modifyContract(@PathVariable UUID id,
-                                            @Valid @RequestBody ContractModificationDto modifications) {
+    public Optional<GeneralRequest> modifyContract(@PathVariable UUID id,
+                                                   @Valid @RequestBody ContractModificationDto modifications) {
         try {
-            Request request = Request.builder()
+            GeneralRequest request = GeneralRequest.builder()
                     .id(UUID.randomUUID())
                     .status(RequestStatus.OPEN)
                     .author(SecurityContextHolder.getContext().getAuthentication().getName())
@@ -131,10 +92,17 @@ public class RequestService {
         }
     }
 
-    public Optional<Request> addResponse(UUID id, String response) {
-        Optional<Request> request = requestRepository.findById(id);
+    /**
+     * Add a response to a request.
+     *
+     * @param id Id of the contract to add response to.
+     * @param response Response to the contract.
+     * @return The Request Entry
+     */
+    public Optional<GeneralRequest> addResponse(UUID id, String response) {
+        Optional<GeneralRequest> request = requestRepository.findById(id);
 
-        if(request.isEmpty()) {
+        if (request.isEmpty()) {
             return request;
         }
 
@@ -143,7 +111,7 @@ public class RequestService {
 
         requestRepository.save(request.get());
 
-        return Optional.of(request.get());
+        return request;
     }
 
     /**
@@ -153,8 +121,8 @@ public class RequestService {
      * @param body Message of the request.
      * @return The Request Entry.
      */
-    public Request addRequestDocument(UUID id, String body) {
-        Request request = Request.builder()
+    public GeneralRequest addRequestDocument(UUID id, String body) {
+        GeneralRequest request = GeneralRequest.builder()
                 .id(UUID.randomUUID())
                 .status(RequestStatus.OPEN)
                 .author(SecurityContextHolder.getContext().getAuthentication().getName())

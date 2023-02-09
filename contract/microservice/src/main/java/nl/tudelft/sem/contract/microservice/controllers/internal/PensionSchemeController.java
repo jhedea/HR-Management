@@ -59,5 +59,4 @@ public class PensionSchemeController {
         pensionSchemeRepository.save(pensionScheme);
         return ResponseEntity.ok(pensionScheme.getDto());
     }
-
 }

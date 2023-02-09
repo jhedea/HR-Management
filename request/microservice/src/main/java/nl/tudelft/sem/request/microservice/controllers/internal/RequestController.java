@@ -13,7 +13,7 @@ import nl.tudelft.sem.contract.client.ContractClientConfiguration;
 import nl.tudelft.sem.contract.commons.entities.ContractModificationDto;
 import nl.tudelft.sem.request.commons.entities.RequestDto;
 import nl.tudelft.sem.request.commons.entities.RequestStatus;
-import nl.tudelft.sem.request.microservice.database.entities.Request;
+import nl.tudelft.sem.request.microservice.database.entities.GeneralRequest;
 import nl.tudelft.sem.request.microservice.database.entities.utils.RequestSpecification;
 import nl.tudelft.sem.request.microservice.database.repositories.RequestRepository;
 import nl.tudelft.sem.request.microservice.exceptions.BadRequestBody;
@@ -34,11 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(INTERNAL_PATH + "/request")
 public class RequestController {
-    /**
-     * Client instance to use (need to access its HTTP client).
-     */
-    @NonNull
-    private final transient ContractClient client;
 
     @NonNull
     private final transient RequestRepository requestRepository;
@@ -52,7 +47,6 @@ public class RequestController {
      * @param requestRepository Repository for the requests.
      */
     public RequestController(@NonNull RequestRepository requestRepository, RequestService requestService) {
-        this.client = new ContractClient(new ContractClientConfiguration(URI.create("http://localhost:8082")));
         this.requestRepository = requestRepository;
         this.requestService = requestService;
     }
@@ -65,7 +59,7 @@ public class RequestController {
      */
     @PostMapping
     ResponseEntity<RequestDto> createRequest(@RequestBody RequestDto requestDto) {
-        Request request = requestRepository.save(new Request(requestDto));
+        GeneralRequest request = requestRepository.save(new GeneralRequest(requestDto));
         return ResponseEntity.created(URI.create(INTERNAL_PATH + "/request/" + request.getId())).body(request.getDto());
     }
 
@@ -86,8 +80,8 @@ public class RequestController {
      * @return ResponseEntity with all the requests marked as 'open'.
      */
     @GetMapping("/open")
-    ResponseEntity<List<Request>> getAllOpenRequests() {
-        List<Request> requests = requestRepository.findAll(RequestSpecification.hasAttribute(RequestStatus.OPEN));
+    ResponseEntity<List<GeneralRequest>> getAllOpenRequests() {
+        List<GeneralRequest> requests = requestRepository.findAll(RequestSpecification.hasAttribute(RequestStatus.OPEN));
 
         return new ResponseEntity<>(requests, HttpStatus.OK);
     }
@@ -101,7 +95,7 @@ public class RequestController {
      */
     @PutMapping({"/reject/{id}"})
     ResponseEntity<RequestDto> rejectRequest(@PathVariable UUID id, @RequestBody String responseBody) {
-        Request request = requestRepository.findById(id).orElseThrow(RequestNotFoundException::new);
+        GeneralRequest request = requestRepository.findById(id).orElseThrow(RequestNotFoundException::new);
         return ResponseEntity.ok(requestService.rejectRequest(request, responseBody).getDto());
     }
 
@@ -113,7 +107,7 @@ public class RequestController {
      */
     @PutMapping("/approve/{id}")
     ResponseEntity<RequestDto> approveRequest(@PathVariable UUID id) {
-        Request request = requestRepository.findById(id).orElseThrow(RequestNotFoundException::new);
+        GeneralRequest request = requestRepository.findById(id).orElseThrow(RequestNotFoundException::new);
 
         return ResponseEntity.ok(requestService.approveRequest(request).getDto());
     }
@@ -129,7 +123,7 @@ public class RequestController {
     @PostMapping("/contract/{id}")
     ResponseEntity<RequestDto> modifyContract(@PathVariable UUID id,
                                   @Valid @RequestBody ContractModificationDto modifications) {
-        Request request = requestService.modifyContract(id, modifications).orElseThrow(BadRequestBody::new);
+        GeneralRequest request = requestService.modifyContract(id, modifications).orElseThrow(BadRequestBody::new);
 
         return ResponseEntity.ok(request.getDto());
     }
@@ -137,7 +131,7 @@ public class RequestController {
     @PutMapping("document/respond/{id}")
     ResponseEntity<RequestDto> addDocument(@PathVariable UUID id,
                                            @Valid @RequestBody String response) {
-        Request request = requestService.addResponse(id, response).orElseThrow(BadRequestBody::new);
+        GeneralRequest request = requestService.addResponse(id, response).orElseThrow(BadRequestBody::new);
 
         return ResponseEntity.ok(request.getDto());
     }
@@ -152,7 +146,7 @@ public class RequestController {
     @PostMapping("/document/{id}")
     ResponseEntity<RequestDto> requestDocument(@PathVariable UUID id,
                                                 @RequestBody String body) {
-        Request request = requestService.addRequestDocument(id, body);
+        GeneralRequest request = requestService.addRequestDocument(id, body);
 
         return ResponseEntity.ok(request.getDto());
     }

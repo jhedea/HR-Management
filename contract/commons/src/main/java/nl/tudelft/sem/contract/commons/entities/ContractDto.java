@@ -1,67 +1,42 @@
 package nl.tudelft.sem.contract.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.Setter;
 import nl.tudelft.sem.contract.commons.entities.utils.Dto;
 import nl.tudelft.sem.contract.commons.entities.utils.Views;
-import nl.tudelft.sem.contract.commons.validators.DayOfMonth;
+
 
 /**
  * Contract data transfer object.
  */
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonView(Views.Public.class)
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class ContractDto implements Dto {
     /**
      * The ID of the contract.
      */
     protected UUID id;
 
-    protected UUID employeeId;
+    protected ContractPartiesDto contractParties;
 
-    protected UUID employerId;
-
-    protected ContractType type;
-
-    protected ContractStatus status;
-
-    @Min(8)
-    @Max(40)
-    protected int hoursPerWeek;
-
-    @Min(15)
-    @Max(30)
-    protected int vacationDays;
-
-    @DayOfMonth({1, 15})
-    protected LocalDate startDate;
-
-    protected LocalDate endDate;
-
-    protected LocalDate terminationDate;
-
-    @Min(0)
-    @Max(1)
-    @NotNull
-    @NonNull
-    protected BigDecimal salaryScalePoint = BigDecimal.ZERO;
-
-    @PastOrPresent
-    private LocalDate lastSalaryIncreaseDate;
+    protected ContractInfoDto contractInfo;
 
     protected JobPositionDto jobPosition;
 
@@ -69,26 +44,42 @@ public class ContractDto implements Dto {
 
     protected List<@NotBlank String> benefits;
 
+    protected ContractTermsDto contractTerms;
+
     public static ContractDtoBuilder builder() {
         return new ContractDtoBuilder();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ContractDto that = (ContractDto) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(contractParties, that.getContractParties())
+                && Objects.equals(getContractInfo(), that.getContractInfo())
+                && Objects.equals(getJobPosition(), that.getJobPosition())
+                && Objects.equals(getPensionScheme(), that.getPensionScheme())
+                && Objects.equals(getBenefits(), that.getBenefits())
+                && Objects.equals(getContractTerms(), that.getContractTerms());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
+
     public static class ContractDtoBuilder {
         private transient UUID idForm;
-        private transient UUID employeeIdForm;
-        private transient UUID employerIdForm;
-        private transient ContractType typeForm;
-        private transient ContractStatus statusForm;
-        private transient @Min(8) @Max(40) int hoursPerWeekForm;
-        private transient @Min(15) @Max(30) int vacationDaysForm;
-        private transient @DayOfMonth({1, 15}) LocalDate startDateForm;
-        private transient LocalDate endDateForm;
-        private transient LocalDate terminationDateForm;
-        private transient @Min(0) @Max(1) @NotNull @NonNull BigDecimal salaryScalePointForm;
-        private transient @PastOrPresent LocalDate lastSalaryIncreaseDateForm;
+        private transient ContractPartiesDto contractPartiesField;
+        private transient ContractInfoDto contractInfoForm;
         private transient JobPositionDto jobPositionForm;
         private transient PensionSchemeDto pensionSchemeForm;
         private transient List<@NotBlank String> benefitsForm;
+        private transient ContractTermsDto contractTermsDtoForm;
 
         ContractDtoBuilder() {
         }
@@ -98,58 +89,13 @@ public class ContractDto implements Dto {
             return this;
         }
 
-        public ContractDtoBuilder employeeId(UUID employeeId) {
-            this.employeeIdForm = employeeId;
+        public ContractDtoBuilder contractParties(ContractPartiesDto contractParties) {
+            this.contractPartiesField = contractParties;
             return this;
         }
 
-        public ContractDtoBuilder employerId(UUID employerId) {
-            this.employerIdForm = employerId;
-            return this;
-        }
-
-        public ContractDtoBuilder type(ContractType type) {
-            this.typeForm = type;
-            return this;
-        }
-
-        public ContractDtoBuilder status(ContractStatus status) {
-            this.statusForm = status;
-            return this;
-        }
-
-        public ContractDtoBuilder hoursPerWeek(@Min(8) @Max(40) int hoursPerWeek) {
-            this.hoursPerWeekForm = hoursPerWeek;
-            return this;
-        }
-
-        public ContractDtoBuilder vacationDays(@Min(15) @Max(30) int vacationDays) {
-            this.vacationDaysForm = vacationDays;
-            return this;
-        }
-
-        public ContractDtoBuilder startDate(@DayOfMonth({1, 15}) LocalDate startDate) {
-            this.startDateForm = startDate;
-            return this;
-        }
-
-        public ContractDtoBuilder endDate(LocalDate endDate) {
-            this.endDateForm = endDate;
-            return this;
-        }
-
-        public ContractDtoBuilder terminationDate(LocalDate terminationDate) {
-            this.terminationDateForm = terminationDate;
-            return this;
-        }
-
-        public ContractDtoBuilder salaryScalePoint(@Min(0) @Max(1) @NotNull @NonNull BigDecimal salaryScalePoint) {
-            this.salaryScalePointForm = salaryScalePoint;
-            return this;
-        }
-
-        public ContractDtoBuilder lastSalaryIncreaseDate(@PastOrPresent LocalDate lastSalaryIncreaseDate) {
-            this.lastSalaryIncreaseDateForm = lastSalaryIncreaseDate;
+        public ContractDtoBuilder contractInfo(ContractInfoDto contractInfo) {
+            this.contractInfoForm = contractInfo;
             return this;
         }
 
@@ -168,27 +114,14 @@ public class ContractDto implements Dto {
             return this;
         }
 
-        /**
-         * Build the DTO.
-         *
-         * @return Built DTO.
-         */
+        public ContractDtoBuilder contractTerms(ContractTermsDto contractTermsDto) {
+            this.contractTermsDtoForm = contractTermsDto;
+            return this;
+        }
+
         public ContractDto build() {
-            return new ContractDto(idForm,
-                    employeeIdForm,
-                    employerIdForm,
-                    typeForm,
-                    statusForm,
-                    hoursPerWeekForm,
-                    vacationDaysForm,
-                    startDateForm,
-                    endDateForm,
-                    terminationDateForm,
-                    salaryScalePointForm,
-                    lastSalaryIncreaseDateForm,
-                    jobPositionForm,
-                    pensionSchemeForm,
-                    benefitsForm);
+            return new ContractDto(idForm, contractPartiesField, contractInfoForm,
+                    jobPositionForm, pensionSchemeForm, benefitsForm, contractTermsDtoForm);
         }
     }
 }

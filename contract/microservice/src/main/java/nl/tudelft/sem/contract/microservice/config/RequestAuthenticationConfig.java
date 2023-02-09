@@ -24,10 +24,12 @@ public class RequestAuthenticationConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http.headers().frameOptions().sameOrigin()
+                .and().csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/internal/**").permitAll() // XXX: This should be secured somehow (maybe IP whitelist)
                 .antMatchers("/actuator/**").permitAll() // XXX: As above, needs to be properly secured
+                .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
                 .and()

@@ -1,8 +1,5 @@
 package nl.tudelft.sem.contract.microservice.database.entities;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,9 +7,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -24,8 +21,6 @@ import nl.tudelft.sem.contract.commons.entities.JobPositionDto;
 import nl.tudelft.sem.contract.microservice.database.entities.utils.BaseEntity;
 import org.modelmapper.ModelMapper;
 
-@SuppressWarnings("com.haulmont.jpb.LombokEqualsAndHashCodeInspection")
-@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @Getter
 @Setter
@@ -45,9 +40,9 @@ public class JobPosition extends BaseEntity<JobPositionDto> {
     @ToString.Exclude
     private Set<Contract> contracts;
 
-    @NotBlank
-    @ManyToOne(optional = false)
+    @ManyToOne(cascade = javax.persistence.CascadeType.ALL, optional = false)
     @JoinColumn(name = "scale_scale_id", nullable = false)
+    @NotNull
     private SalaryScale salaryScale;
 
     public JobPosition(JobPositionDto jobPositionDto) {

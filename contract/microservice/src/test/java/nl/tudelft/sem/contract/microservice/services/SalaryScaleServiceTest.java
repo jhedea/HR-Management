@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import nl.tudelft.sem.contract.commons.entities.utils.StringDto;
 import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.SalaryScale;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import nl.tudelft.sem.contract.microservice.database.repositories.SalaryScaleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,8 +30,7 @@ public class SalaryScaleServiceTest {
     void editMinimumPay() {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("60.34"))
-                .maximumPay(new BigDecimal("4304.43"))
+                .pay(new Pay(new BigDecimal("60.34"), new BigDecimal("4304.43")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -40,16 +40,15 @@ public class SalaryScaleServiceTest {
 
         verify(salaryScaleRepository, times(1)).save(any());
         assertEquals(result.getId(), salaryScale.getId());
-        assertEquals(result.getMinimumPay(), new BigDecimal("546.68"));
-        assertEquals(result.getMaximumPay(), salaryScale.getMaximumPay());
+        assertEquals(result.getPay().getMinimumPay(), new BigDecimal("546.68"));
+        assertEquals(result.getPay().getMaximumPay(), salaryScale.getPay().getMaximumPay());
     }
 
     @Test
     void editMaximumPay() {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("60.34"))
-                .maximumPay(new BigDecimal("4304.43"))
+                .pay(new Pay(new BigDecimal("60.34"), new BigDecimal("4304.43")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -59,8 +58,8 @@ public class SalaryScaleServiceTest {
 
         verify(salaryScaleRepository, times(1)).save(any());
         assertEquals(result.getId(), salaryScale.getId());
-        assertEquals(result.getMinimumPay(), salaryScale.getMinimumPay());
-        assertEquals(result.getMaximumPay(), new BigDecimal("5546.68"));
+        assertEquals(result.getPay().getMinimumPay(), salaryScale.getPay().getMinimumPay());
+        assertEquals(result.getPay().getMaximumPay(), new BigDecimal("5546.68"));
     }
 
 }

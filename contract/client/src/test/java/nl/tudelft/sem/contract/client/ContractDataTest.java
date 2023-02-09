@@ -41,6 +41,7 @@ class ContractDataTest {
         this.client = new ContractClient(new ContractClientConfiguration(mockServer.url("/").uri()));
     }
 
+
     @Test
     void getExistingContract() throws JsonProcessingException, InterruptedException {
         ContractDto contract = new ContractDto();
@@ -55,6 +56,8 @@ class ContractDataTest {
         assertEquals(returnedContract.getId(), contract.getId());
         assertTrue(Objects.requireNonNull(mockServer.takeRequest().getPath()).endsWith("/contract/" + getUuid(1)));
     }
+
+
 
     @Test
     void getNonExistingContract() throws JsonProcessingException {

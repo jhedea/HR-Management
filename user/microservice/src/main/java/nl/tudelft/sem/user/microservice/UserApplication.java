@@ -8,9 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Example microservice application.
  */
 @SpringBootApplication
-public class Application {
+public class UserApplication {
     @Generated
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(UserApplication.class, args);
     }
 }

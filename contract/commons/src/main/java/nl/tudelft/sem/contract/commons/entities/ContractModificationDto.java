@@ -23,6 +23,8 @@ import nl.tudelft.sem.contract.commons.validators.DayOfMonth;
 @AllArgsConstructor
 @JsonView(Views.Public.class)
 public class ContractModificationDto implements Dto {
+    protected ContractStatus status;
+
     protected ContractType type;
 
     @Min(8)
@@ -56,6 +58,7 @@ public class ContractModificationDto implements Dto {
     }
 
     public static class ContractModificationDtoBuilder {
+        private transient ContractStatus statusForm;
         private transient ContractType typeForm;
         private transient @Min(8) @Max(40) Integer hoursPerWeekForm;
         private transient @Min(15) @Max(30) Integer vacationDaysForm;
@@ -67,6 +70,11 @@ public class ContractModificationDto implements Dto {
         private transient List<@NotBlank String> benefitsForm;
 
         ContractModificationDtoBuilder() {
+        }
+
+        public ContractModificationDtoBuilder status(ContractStatus status) {
+            this.statusForm = status;
+            return this;
         }
 
         public ContractModificationDtoBuilder type(ContractType type) {
@@ -120,7 +128,8 @@ public class ContractModificationDto implements Dto {
          * @return Built DTO.
          */
         public ContractModificationDto build() {
-            return new ContractModificationDto(typeForm,
+            return new ContractModificationDto(statusForm,
+                    typeForm,
                     hoursPerWeekForm,
                     vacationDaysForm,
                     startDateForm,

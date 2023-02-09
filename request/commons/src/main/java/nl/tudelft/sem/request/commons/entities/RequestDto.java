@@ -16,7 +16,6 @@ import nl.tudelft.sem.request.commons.entities.utils.Views;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @JsonView(Views.Public.class)
 public class RequestDto implements Dto {
     /**
@@ -28,11 +27,6 @@ public class RequestDto implements Dto {
      * The ID of the contract related to the request.
      */
     protected UUID contractId;
-
-    /**
-     * The type of the request.
-     */
-    protected RequestType requestType;
 
     /**
      * Body of the request.

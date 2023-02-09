@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 /**
  * User Data transfer object.
  */
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonView(Views.Public.class)
@@ -24,9 +23,82 @@ public class UserDto implements Dto {
     private String email;
     private String phoneNumber;
 
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getNetId() {
+        return netId;
+    }
+
+    public void setNetId(String netId) {
+        this.netId = netId;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public static UserDtoBuilder builder() {
         return new UserDtoBuilder();
     }
+
 
     public static class UserDtoBuilder {
         private transient UUID id;
@@ -38,6 +110,78 @@ public class UserDto implements Dto {
         private transient String lastNameField;
         private transient String emailField;
         private transient String phoneNumberField;
+
+        public UUID getId() {
+            return id;
+        }
+
+        public void setId(UUID id) {
+            this.id = id;
+        }
+
+        public String getNetIdField() {
+            return netIdField;
+        }
+
+        public void setNetIdField(String netIdField) {
+            this.netIdField = netIdField;
+        }
+
+        public Role getRoleField() {
+            return roleField;
+        }
+
+        public void setRoleField(Role roleField) {
+            this.roleField = roleField;
+        }
+
+        public String getAddressField() {
+            return addressField;
+        }
+
+        public void setAddressField(String addressField) {
+            this.addressField = addressField;
+        }
+
+        public String getDescriptionField() {
+            return descriptionField;
+        }
+
+        public void setDescriptionField(String descriptionField) {
+            this.descriptionField = descriptionField;
+        }
+
+        public String getFirstNameField() {
+            return firstNameField;
+        }
+
+        public void setFirstNameField(String firstNameField) {
+            this.firstNameField = firstNameField;
+        }
+
+        public String getLastNameField() {
+            return lastNameField;
+        }
+
+        public void setLastNameField(String lastNameField) {
+            this.lastNameField = lastNameField;
+        }
+
+        public String getEmailField() {
+            return emailField;
+        }
+
+        public void setEmailField(String emailField) {
+            this.emailField = emailField;
+        }
+
+        public String getPhoneNumberField() {
+            return phoneNumberField;
+        }
+
+        public void setPhoneNumberField(String phoneNumberField) {
+            this.phoneNumberField = phoneNumberField;
+        }
 
         private UserDtoBuilder() {
         }

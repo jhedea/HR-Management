@@ -27,6 +27,9 @@ import nl.tudelft.sem.contract.commons.entities.ContractStatus;
 import nl.tudelft.sem.contract.commons.entities.ContractType;
 import nl.tudelft.sem.contract.microservice.database.entities.Contract;
 import nl.tudelft.sem.contract.microservice.database.entities.JobPosition;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractInfo;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractParties;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractTerms;
 import nl.tudelft.sem.contract.microservice.database.repositories.ContractRepository;
 import nl.tudelft.sem.contract.microservice.exceptions.ContractNotFoundException;
 import nl.tudelft.sem.contract.microservice.services.ContractService;
@@ -69,17 +72,17 @@ class ContractControllerTest {
     void getExistingContract() throws Exception {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.ACTIVE)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.ACTIVE))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
 
@@ -104,17 +107,17 @@ class ContractControllerTest {
     void modifyExistingContract() throws Exception {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         ContractModificationDto modDto = ContractModificationDto.builder()
@@ -126,17 +129,17 @@ class ContractControllerTest {
         // Verify that the modified contract is actually returned
         Contract modifiedContract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(15)
-                .startDate(LocalDate.of(2022, 1, 15))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(15)
+                        .startDate(LocalDate.of(2022, 1, 15))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.4"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.4"))
                 .build();
 
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
@@ -151,6 +154,7 @@ class ContractControllerTest {
 
     @Test
     void modifyInvalidContract() throws Exception {
+        //noinspection DataFlowIssue
         ContractModificationDto modDto = ContractModificationDto.builder()
                 .vacationDays(100) // Invalid
                 .salaryScalePoint(new BigDecimal("1.4")) // Invalid
@@ -166,17 +170,17 @@ class ContractControllerTest {
     void modifyNotDraftContract() throws Exception {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.ACTIVE)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.ACTIVE))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
 
@@ -218,17 +222,17 @@ class ContractControllerTest {
     void deleteExistingContract() throws Exception {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.ACTIVE)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.ACTIVE))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
 
@@ -243,17 +247,17 @@ class ContractControllerTest {
     void addContract() throws Exception {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.ACTIVE)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.ACTIVE))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
         when(contractService.addContract(any())).thenReturn(contract);
 

@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 import nl.tudelft.sem.contract.commons.entities.utils.Dto;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 @Getter
 @Setter
@@ -33,6 +34,7 @@ public abstract class BaseEntity<D extends Dto> {
             name = "UUID",
             strategy = "org.hibernate.id.UUIDGenerator"
     )
+    @Type(type = "org.hibernate.type.UUIDCharType")
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
@@ -45,14 +47,10 @@ public abstract class BaseEntity<D extends Dto> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || id == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
             return false;
         }
-        BaseEntity<?> that = (BaseEntity<?>) o;
-        return Objects.equals(id, that.id);
+        return this == o || Objects.equals(id, ((BaseEntity<?>) o).id);
     }
 
     @Override

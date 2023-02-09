@@ -1,6 +1,7 @@
 package nl.tudelft.sem.user.client;
 
 import static nl.tudelft.sem.user.client.TestHelpers.getUuid;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
@@ -22,6 +22,7 @@ import nl.tudelft.sem.user.commons.entities.utils.UuidDto;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -105,8 +106,7 @@ class UserDataTest {
                 .uuid(getUuid(1))
                 .build();
 
-        UuidDto uuid = UuidDto.builder().build();
-        uuid.setUuid(getUuid(1));
+        UuidDto uuid = new UuidDto(getUuid(1));
         mockServer.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .addHeader("Content-Type", "application/json; charset=utf-8")
@@ -118,8 +118,6 @@ class UserDataTest {
         assertTrue(Objects.requireNonNull(mockServer.takeRequest().getPath())
                 .endsWith("/user/getUUID/" + userDto.getNetId()));
     }
-
-
 
     @Test
     void getNonExistingUser() throws JsonProcessingException {
@@ -144,5 +142,8 @@ class UserDataTest {
         assertThrows(NullPointerException.class, () -> client.user().getuser(null));
     }
 
-
+    @Test
+    void nullThrower() {
+        Assertions.assertNotNull(client.user().getuser(UUID.randomUUID()));
+    }
 }

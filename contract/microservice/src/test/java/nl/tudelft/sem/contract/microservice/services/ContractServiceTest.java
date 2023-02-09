@@ -2,7 +2,9 @@ package nl.tudelft.sem.contract.microservice.services;
 
 import static nl.tudelft.sem.contract.microservice.TestHelpers.getUuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +20,9 @@ import nl.tudelft.sem.contract.commons.entities.ContractType;
 import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.Contract;
 import nl.tudelft.sem.contract.microservice.database.entities.JobPosition;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractInfo;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractParties;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractTerms;
 import nl.tudelft.sem.contract.microservice.database.repositories.ContractRepository;
 import nl.tudelft.sem.contract.microservice.database.repositories.JobPositionRepository;
 import nl.tudelft.sem.contract.microservice.exceptions.ActionNotAllowedException;
@@ -51,17 +56,17 @@ class ContractServiceTest {
 
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(TestHelpers.getUuid(3)).name("Job position").build())
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         ContractModificationDto modDto = ContractModificationDto.builder()
@@ -81,31 +86,31 @@ class ContractServiceTest {
 
         verify(contractRepository, times(1)).save(any());
         assertEquals(result.getId(), contract.getId());
-        assertEquals(result.getVacationDays(), 15);
-        assertEquals(result.getSalaryScalePoint(), new BigDecimal("0.4"));
-        assertEquals(result.getHoursPerWeek(), 10);
-        assertEquals(result.getType(), ContractType.PART_TIME);
-        assertEquals(result.getEndDate(), LocalDate.of(2022, 1, 1));
+        assertEquals(result.getContractTerms().getVacationDays(), 15);
+        assertEquals(result.getContractTerms().getSalaryScalePoint(), new BigDecimal("0.4"));
+        assertEquals(result.getContractTerms().getHoursPerWeek(), 10);
+        assertEquals(result.getContractInfo().getType(), ContractType.PART_TIME);
+        assertEquals(result.getContractTerms().getEndDate(), LocalDate.of(2022, 1, 1));
         assertEquals(result.getBenefits(), List.of("benefit1", "benefit2"));
         assertEquals(result.getJobPosition(), newJobPosition);
-        assertEquals(result.getStartDate(), LocalDate.of(2022, 1, 15));
+        assertEquals(result.getContractTerms().getStartDate(), LocalDate.of(2022, 1, 15));
     }
 
     @Test
     void modifyContractEmpty() {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(TestHelpers.getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
                 .build();
 
         ContractModificationDto modDto = ContractModificationDto.builder().build();
@@ -121,17 +126,16 @@ class ContractServiceTest {
     void modifyContractNotDraft() {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.EXPIRED)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.EXPIRED))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
                 .jobPosition(JobPosition.builder().id(TestHelpers.getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         ContractModificationDto modDto = ContractModificationDto.builder().build();
@@ -148,17 +152,16 @@ class ContractServiceTest {
     void terminateNonActiveContract() {
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(TestHelpers.getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
                 .build();
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
         assertThrows(ActionNotAllowedException.class, () -> contractService.terminateContract(getUuid(1)));
@@ -166,26 +169,30 @@ class ContractServiceTest {
 
     @Test
     void terminateActiveContract() {
+
         Contract contract = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.ACTIVE)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.ACTIVE))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder().id(TestHelpers.getUuid(3)).name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
-                .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
                 .build();
         when(contractRepository.findById(getUuid(1))).thenReturn(Optional.of(contract));
         when(contractRepository.save(contractCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
 
+        LocalDate now = LocalDate.now();
         contractService.terminateContract(getUuid(1));
-
+        assertNotNull(contractCaptor.getValue().getContractTerms().getTerminationDate());
+        assertTrue(contractCaptor.getValue().getContractTerms().getTerminationDate().isAfter(now)
+                || contractCaptor.getValue().getContractTerms().getTerminationDate().isEqual(now));
         verify(contractRepository, times(1)).save(contract);
-        assertEquals(contractCaptor.getValue().getStatus(), ContractStatus.TERMINATED);
+        assertEquals(contractCaptor.getValue().getContractInfo().getStatus(), ContractStatus.TERMINATED);
     }
 }

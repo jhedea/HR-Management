@@ -1,13 +1,11 @@
 package nl.tudelft.sem.contract.microservice.database.entities;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -19,8 +17,6 @@ import nl.tudelft.sem.contract.commons.entities.PensionSchemeDto;
 import nl.tudelft.sem.contract.microservice.database.entities.utils.BaseEntity;
 import org.modelmapper.ModelMapper;
 
-@SuppressWarnings("com.haulmont.jpb.LombokEqualsAndHashCodeInspection")
-@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @Getter
 @Setter
@@ -43,6 +39,7 @@ public class PensionScheme extends BaseEntity<PensionSchemeDto> {
     private Set<Contract> contracts;
 
     public PensionScheme(PensionSchemeDto pensionSchemeDto) {
+        this.setId(pensionSchemeDto.getId());
         this.name = pensionSchemeDto.getName();
     }
 

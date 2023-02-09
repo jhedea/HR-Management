@@ -8,6 +8,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * </p>
  */
 @Component
+@Slf4j
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
@@ -64,7 +66,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 try {
                     if (jwtTokenVerifier.validateToken(token)) {
                         String netId = jwtTokenVerifier.getNetIdFromToken(token);
-                        var authenticationToken = new UsernamePasswordAuthenticationToken(
+                        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                                 netId,
                                 null, List.of() // no credentials and no authorities
                         );
@@ -78,12 +80,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     }
 
                 } catch (ExpiredJwtException e) {
-                    System.err.println("JWT token has expired.");
+                    log.warn("JWT token has expired.");
                 } catch (IllegalArgumentException | JwtException e) {
-                    System.err.println("Unable to parse JWT token");
+                    log.warn("Unable to parse JWT token");
                 }
             }
-            System.err.println("Invalid authorization header");
+            log.warn("Invalid authorization header");
         }
 
         filterChain.doFilter(request, response);

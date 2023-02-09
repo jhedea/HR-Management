@@ -19,6 +19,10 @@ import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.Contract;
 import nl.tudelft.sem.contract.microservice.database.entities.JobPosition;
 import nl.tudelft.sem.contract.microservice.database.entities.SalaryScale;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractInfo;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractParties;
+import nl.tudelft.sem.contract.microservice.database.entities.contract.ContractTerms;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import nl.tudelft.sem.contract.microservice.database.repositories.ContractRepository;
 import nl.tudelft.sem.notification.client.NotificationClient;
 import nl.tudelft.sem.notification.client.NotificationData;
@@ -59,63 +63,62 @@ class ContractMonitoringServiceTest {
     void testContractsPresent() {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.1"))
                 .build();
 
         Contract contract1 = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         Contract contract2 = Contract.builder()
                 .id(getUuid(2))
-                .employeeId(getUuid(3))
-                .employerId(getUuid(4))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(3), getUuid(4)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         Contract contract3 = Contract.builder()
                 .id(getUuid(3))
-                .employeeId(getUuid(3))
-                .employerId(getUuid(4))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(3), getUuid(4)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.95"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.95"))
                 .build();
 
         when(contractRepository.findContractEligibleForSalaryScaleIncrease(any()))
@@ -127,13 +130,13 @@ class ContractMonitoringServiceTest {
         contractMonitoringService.increaseApplicableSalaryScalePoints();
 
         verify(contractRepository, times(3)).save(any());
-        assertEquals(new BigDecimal("0.6"), contractCaptor.getAllValues().get(0).getSalaryScalePoint());
+        assertEquals(new BigDecimal("0.6"), contractCaptor.getAllValues().get(0).getContractTerms().getSalaryScalePoint());
         assertEquals(getUuid(1), contractCaptor.getAllValues().get(0).getId());
 
-        assertEquals(new BigDecimal("0.6"), contractCaptor.getAllValues().get(1).getSalaryScalePoint());
+        assertEquals(new BigDecimal("0.6"), contractCaptor.getAllValues().get(1).getContractTerms().getSalaryScalePoint());
         assertEquals(getUuid(2), contractCaptor.getAllValues().get(1).getId());
 
-        assertEquals(new BigDecimal("1"), contractCaptor.getAllValues().get(2).getSalaryScalePoint());
+        assertEquals(new BigDecimal("1"), contractCaptor.getAllValues().get(2).getContractTerms().getSalaryScalePoint());
         assertEquals(getUuid(3), contractCaptor.getAllValues().get(2).getId());
     }
 
@@ -150,63 +153,62 @@ class ContractMonitoringServiceTest {
     void testSendExpirationContractsPresent() throws JsonProcessingException {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.1"))
                 .build();
 
         Contract contract1 = Contract.builder()
                 .id(getUuid(1))
-                .employeeId(getUuid(2))
-                .employerId(getUuid(3))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(2), getUuid(3)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         Contract contract2 = Contract.builder()
                 .id(getUuid(2))
-                .employeeId(getUuid(3))
-                .employerId(getUuid(4))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(3), getUuid(4)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.5"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.5"))
                 .build();
 
         Contract contract3 = Contract.builder()
                 .id(getUuid(3))
-                .employerId(getUuid(4))
-                .employeeId(getUuid(4))
-                .type(ContractType.TEMPORARY)
-                .status(ContractStatus.DRAFT)
-                .hoursPerWeek(10)
-                .vacationDays(20)
-                .startDate(LocalDate.of(2022, 1, 1))
-                .lastSalaryIncreaseDate(LocalDate.of(2020, 1, 1))
+                .contractParties(new ContractParties(getUuid(4), getUuid(4)))
+                .contractInfo(new ContractInfo(ContractType.TEMPORARY, ContractStatus.DRAFT))
+                .contractTerms(ContractTerms.builder()
+                        .hoursPerWeek(10)
+                        .vacationDays(20)
+                        .startDate(LocalDate.of(2022, 1, 1))
+                        .lastSalaryIncreaseDate(LocalDate.of(2022, 1, 1))
+                        .salaryScalePoint(new BigDecimal("0.95"))
+                        .build())
                 .benefits(List.of())
                 .jobPosition(JobPosition.builder()
                         .id(TestHelpers.getUuid(3))
                         .salaryScale(salaryScale)
                         .name("Job position").build())
-                .salaryScalePoint(new BigDecimal("0.95"))
                 .build();
 
         lenient().when(notificationClient.notification()).thenReturn(notificationData);

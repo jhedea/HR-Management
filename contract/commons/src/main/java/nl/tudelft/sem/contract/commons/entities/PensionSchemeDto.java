@@ -1,6 +1,9 @@
 package nl.tudelft.sem.contract.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.Set;
 import java.util.UUID;
 import javax.validation.constraints.NotBlank;
@@ -14,11 +17,16 @@ import nl.tudelft.sem.contract.commons.entities.utils.Views;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 @JsonView(Views.Public.class)
 public class PensionSchemeDto implements Dto {
     protected UUID id;
+
     @NotBlank
     protected String name;
+
     protected Set<@NotNull ContractDto> contracts;
 
     public static PensionSchemeDtoBuilder builder() {

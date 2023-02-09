@@ -63,8 +63,7 @@ public class JobPositionPublicController {
      * @param jobPositionDto job position to be added
      * @return added job position
      */
-    @PostMapping
-
+    @PostMapping("")
     ResponseEntity<JobPositionDto> addJobPosition(@RequestBody JobPositionDto jobPositionDto) {
         if (!authenticationService.hasAtLeastRole(Role.HR)) {
             throw new ActionNotAllowedException("You do not have the required role to add a job position.");

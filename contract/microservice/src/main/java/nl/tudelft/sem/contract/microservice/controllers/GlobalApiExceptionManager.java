@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.tudelft.sem.contract.commons.ApiError;
 import nl.tudelft.sem.contract.microservice.exceptions.ActionNotAllowedException;
 import nl.tudelft.sem.contract.microservice.exceptions.NotFoundException;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class GlobalApiExceptionManager {
+    /**
+     * Handles integrity constraint violations.
+     *
+     * @param e the exception
+     * @return the error message
+     */
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    @ExceptionHandler(JdbcSQLIntegrityConstraintViolationException.class)
+    public ApiError handleJdbcSqlIntegrityConstraintViolationException(JdbcSQLIntegrityConstraintViolationException e) {
+        log.error("JdbcSQLIntegrityConstraintViolationException: {}", e.getMessage());
+        return new ApiError(HttpStatus.CONFLICT.value(), e.getMessage());
+    }
+
     /**
      * Handles validation errors for API fields annotated with @Valid.
      *

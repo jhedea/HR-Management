@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import nl.tudelft.sem.template.authentication.authentication.AuthoritiesApi;
 import nl.tudelft.sem.template.authentication.authentication.Authority;
 import nl.tudelft.sem.template.authentication.domain.HasEvents;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.GenericGenerator;
 
 
@@ -76,14 +77,10 @@ public class AppUser extends HasEvents {
      */
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || id == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
             return false;
         }
-        AppUser appUser = (AppUser) o;
-        return id.equals(appUser.id);
+        return this == o || Objects.equals(id, ((AppUser) o).id);
     }
 
     @Override

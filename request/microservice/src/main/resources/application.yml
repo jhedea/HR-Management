@@ -9,3 +9,7 @@ jwt:
 springdoc:
   swagger-ui:
     enabled: false
+
+spring:
+  h2:
+    console.enabled: true

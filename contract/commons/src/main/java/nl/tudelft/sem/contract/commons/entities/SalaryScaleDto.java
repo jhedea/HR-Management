@@ -1,6 +1,8 @@
 package nl.tudelft.sem.contract.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
@@ -8,33 +10,42 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
 import nl.tudelft.sem.contract.commons.entities.utils.Dto;
 import nl.tudelft.sem.contract.commons.entities.utils.Views;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 @JsonView(Views.Public.class)
 public class SalaryScaleDto implements Dto {
     /**
      * The ID of the salary scale.
      */
     protected UUID id;
+
     @Min(0)
     @NonNull
     @NotNull
     protected BigDecimal minimumPay;
+
     @NonNull
     @NotNull
     protected BigDecimal maximumPay;
+
     @Min(0)
     @Max(1)
     @NonNull
     @NotNull
     protected BigDecimal step;
+
     protected Set<@NotNull JobPositionDto> jobPositions;
 
     public static SalaryScaleDtoBuilder builder() {
@@ -48,7 +59,7 @@ public class SalaryScaleDto implements Dto {
         private transient @Min(0) @Max(1) @NonNull @NotNull BigDecimal stepForm;
         private transient Set<@NotNull JobPositionDto> jobPositionsForm;
 
-        SalaryScaleDtoBuilder() {
+        public SalaryScaleDtoBuilder() {
         }
 
         public SalaryScaleDtoBuilder id(UUID id) {

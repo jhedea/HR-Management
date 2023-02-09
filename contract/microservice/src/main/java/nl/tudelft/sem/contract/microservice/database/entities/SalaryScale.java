@@ -1,59 +1,48 @@
 package nl.tudelft.sem.contract.microservice.database.entities;
 
 import java.math.BigDecimal;
-import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
-import javax.persistence.Column;
+import java.util.UUID;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import nl.tudelft.sem.contract.commons.entities.SalaryScaleDto;
 import nl.tudelft.sem.contract.microservice.database.entities.utils.BaseEntity;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import org.modelmapper.ModelMapper;
 
 /**
  * Entity which represents a salary scale.
  */
-@SuppressWarnings("com.haulmont.jpb.LombokEqualsAndHashCodeInspection")
-@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+
+@ToString
 @Getter
 @Setter
-@ToString
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 public class SalaryScale extends BaseEntity<SalaryScaleDto> {
     /**
-     * Minimum salary for this salary scale.
+     * Minimum and maximum salary for this salary scale.
      */
-    @NotBlank
-    @Column(nullable = false)
-    private BigDecimal minimumPay;
-
-    /**
-     * Maximum salary for this salary scale.
-     */
-    @NotBlank
-    @Column(nullable = false)
-    private BigDecimal maximumPay;
+    @NotNull
+    @Embedded
+    @Valid
+    private Pay pay;
 
     @Min(0)
     @Max(1)
@@ -75,17 +64,35 @@ public class SalaryScale extends BaseEntity<SalaryScaleDto> {
      * @param salaryScaleDto the salary scale DTO to convert from.
      */
     public SalaryScale(@Valid SalaryScaleDto salaryScaleDto) {
-        this.minimumPay = salaryScaleDto.getMinimumPay();
-        this.maximumPay = salaryScaleDto.getMaximumPay();
+        this.pay = new Pay(salaryScaleDto.getMinimumPay(), salaryScaleDto.getMaximumPay());
         this.step = salaryScaleDto.getStep();
 
-        if (minimumPay.compareTo(maximumPay) > 0) {
+        if (pay.getMinimumPay().compareTo(pay.getMaximumPay()) > 0) {
             throw new IllegalArgumentException("Minimum pay cannot be greater than maximum pay");
         }
+    }
+
+    /**
+     * Generate a SalaryScaleDto from a UUID.
+     *
+     * @param uuid the UUID to set.
+     */
+    public SalaryScale(@NonNull UUID uuid) {
+        this.setId(uuid);
     }
 
     @Override
     public SalaryScaleDto getDto() {
         return new ModelMapper().map(this, SalaryScaleDto.class);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), pay, step, jobPositions);
     }
 }

@@ -1,6 +1,8 @@
 package nl.tudelft.sem.contract.microservice.controllers.internal;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,6 +15,7 @@ import java.util.Optional;
 import nl.tudelft.sem.contract.commons.entities.utils.StringDto;
 import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.SalaryScale;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import nl.tudelft.sem.contract.microservice.database.repositories.SalaryScaleRepository;
 import nl.tudelft.sem.contract.microservice.services.SalaryScaleService;
 import org.junit.jupiter.api.Test;
@@ -56,8 +59,7 @@ public class SalaryScaleControllerTest {
     void getExistentSalaryScale() throws Exception {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -72,8 +74,7 @@ public class SalaryScaleControllerTest {
     void addNewSalaryScale() throws Exception {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -83,6 +84,23 @@ public class SalaryScaleControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(salaryScale.getDto())))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void addSavedInRepo() throws Exception {
+        SalaryScale salaryScale = SalaryScale.builder()
+                .id(TestHelpers.getUuid(7))
+                .pay(new Pay(new BigDecimal("4570.00"), new BigDecimal("7430.00")))
+                .step(new BigDecimal("0.10"))
+                .build();
+
+        when(salaryScaleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/internal/salary-scale")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(salaryScale.getDto())))
+                .andExpect(status().isCreated());
+        verify(salaryScaleRepository, times(1)).save(any());
     }
 
     @Test
@@ -99,8 +117,7 @@ public class SalaryScaleControllerTest {
     void editMinimumPayExistent() throws Exception {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -108,8 +125,7 @@ public class SalaryScaleControllerTest {
 
         SalaryScale changedSalaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(2))
-                .minimumPay(new BigDecimal("70.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -138,8 +154,7 @@ public class SalaryScaleControllerTest {
     void editMaximumPayExistent() throws Exception {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("10000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 
@@ -147,8 +162,7 @@ public class SalaryScaleControllerTest {
 
         SalaryScale changedSalaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(2))
-                .minimumPay(new BigDecimal("1000000.00"))
-                .maximumPay(new BigDecimal("700000000.00"))
+                .pay(new Pay(new BigDecimal("1000000.00"), new BigDecimal("10000000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 

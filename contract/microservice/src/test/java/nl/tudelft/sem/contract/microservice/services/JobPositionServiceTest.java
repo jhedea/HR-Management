@@ -14,6 +14,7 @@ import nl.tudelft.sem.contract.commons.entities.utils.StringDto;
 import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.JobPosition;
 import nl.tudelft.sem.contract.microservice.database.entities.SalaryScale;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import nl.tudelft.sem.contract.microservice.database.repositories.JobPositionRepository;
 import nl.tudelft.sem.contract.microservice.database.repositories.SalaryScaleRepository;
 import nl.tudelft.sem.contract.microservice.exceptions.SalaryScaleNotFoundException;
@@ -52,8 +53,7 @@ public class JobPositionServiceTest {
     void editSalaryScale() {
         SalaryScale salaryScale = SalaryScale.builder()
                 .id(TestHelpers.getUuid(1))
-                .minimumPay(new BigDecimal("1700.45"))
-                .maximumPay(new BigDecimal("3000.00"))
+                .pay(new Pay(new BigDecimal("1700.45"), new BigDecimal("3000.00")))
                 .step(new BigDecimal("0.01"))
                 .build();
 

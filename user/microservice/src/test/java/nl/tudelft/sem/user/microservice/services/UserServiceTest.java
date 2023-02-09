@@ -1,18 +1,29 @@
 package nl.tudelft.sem.user.microservice.services;
 
+import static nl.tudelft.sem.user.microservice.TestHelpers.getUuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Optional;
+import java.util.UUID;
+import nl.tudelft.sem.user.commons.entities.utils.Dto;
 import nl.tudelft.sem.user.commons.entities.utils.Role;
 import nl.tudelft.sem.user.commons.entities.utils.UserDto;
 import nl.tudelft.sem.user.commons.entities.utils.UserModify;
-import nl.tudelft.sem.user.microservice.database.entities.utils.UserEntity;
+import nl.tudelft.sem.user.microservice.database.entities.UserEntity;
+import nl.tudelft.sem.user.microservice.database.entities.utils.BaseEntity;
 import nl.tudelft.sem.user.microservice.exceptions.UserNotFoundException;
 import nl.tudelft.sem.user.microservice.service.UserService;
 import nl.tudelft.sem.user.microservice.userapi.UserEntityRepository;
@@ -21,10 +32,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 @ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@EnableWebMvc
 class UserServiceTest {
+    private final transient MockMvc mockMvc;
+    private final transient ObjectMapper objectMapper;
+
+    @Autowired
+    UserServiceTest(MockMvc mockMvc) {
+        this.mockMvc = mockMvc;
+        this.objectMapper = new ObjectMapper().registerModules(new Jdk8Module(), new JavaTimeModule());
+    }
+
     @Mock
     private UserEntityRepository userEntityRepository;
     @InjectMocks
@@ -66,17 +93,27 @@ class UserServiceTest {
     }
 
     @Test
+    void noAddUserByNetIdTest() {
+
+        userEntityRepository = mock(UserEntityRepository.class);
+        userService = new UserService(userEntityRepository);
+
+        verify(userEntityRepository, times(0)).save(any());
+
+    }
+
+    @Test
     void updateUserTest() {
         UserModify userDto = UserModify.builder()
-                        .address("newAddress")
-                        .description("newDescription")
-                        .role(Role.FIRED)
-                        .netId("SomeNetId")
-                        .email("newEmail")
-                        .firstName("newFirstName")
-                        .lastName("newLastName")
-                        .phoneNumber("newPhoneNumber")
-                        .build();
+                .address("newAddress")
+                .description("newDescription")
+                .role(Role.FIRED)
+                .netId("SomeNetId")
+                .email("newEmail")
+                .firstName("newFirstName")
+                .lastName("newLastName")
+                .phoneNumber("newPhoneNumber")
+                .build();
 
         userEntityRepository = mock(UserEntityRepository.class);
         userService = new UserService(userEntityRepository);
@@ -90,7 +127,6 @@ class UserServiceTest {
         when(userEntityRepository
                 .save(any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-
 
 
         UserEntity updatedUser = userService.updateUser(userDto);
@@ -174,4 +210,76 @@ class UserServiceTest {
         assertEquals(updatedUser.getEmail(), user1.getEmail());
         assertEquals(updatedUser.getPhoneNumber(), user1.getPhoneNumber());
     }
+
+
+    @Test
+    void testEmptyField() {
+        UserEntity userEntity = new UserEntity();
+        assertNull(userEntity.getAddress());
+
+    }
+
+    @Test
+    void testNonNullFields() {
+        UserEntity us = new UserEntity("", Role.CANDIDATE, "", "fdklwnfw", "", "", "", "");
+        assertEquals(us.getDescription(), "fdklwnfw");
+    }
+
+    @Test
+    void testUserEntityNull() {
+        UserEntity ue = new UserEntity();
+        assertNull(ue.getUuid());
+    }
+
+    @Test
+    void testUserDtoNull() {
+        UserEntity ue = new UserEntity();
+        assertNotNull(ue.getDto());
+    }
+
+    @Test
+    void testUserEntityNotNull() {
+        UserEntity ue = new UserEntity("", Role.CANDIDATE, "", "", "", "", "", "");
+        assertNotNull(ue.getNetId());
+    }
+
+    @Test
+    void getNetIdIsNull() throws Exception {
+        assertNotNull(this.mockMvc.perform(get("/internal/user/{id}", (Object) null)));
+        this.mockMvc.perform(get("/internal/user/{id}", (Object) null))
+                .andExpect(status().is(404));
+
+    }
+
+    @Test
+    void getNonExistingUser() throws Exception {
+        this.mockMvc.perform(get("/internal/user/{id}", getUuid(1)))
+                .andExpect(status().is(404));
+    }
+
+
+    @Test
+    void userNotSaved() throws Exception {
+        UserEntity userEntity = new UserEntity("newId", Role.CANDIDATE, "", "",
+                "", "", "", "");
+        UUID uuid = userEntity.getUuid();
+        //when(userEntityRepository.findById(uuid)).thenReturn(Optional.of(userEntity));
+        this.mockMvc.perform(get("/getRoleByUUID/{id}", "newId")).andExpect(status().is(401));
+    }
+
+    @Test
+    void baseDtoNotFound() {
+        UUID uuid = UUID.randomUUID();
+        BaseEntity baseEntity = null;
+        assertThrows(NullPointerException.class, () -> baseEntity.getDto());
+    }
+
+    @Test
+    void baseDtoEquals() {
+        UUID uuid = UUID.randomUUID();
+        Dto newDto = new UserDto();
+        BaseEntity baseEntity = new UserEntity("", Role.CANDIDATE, "", "", "", "", "", "");
+        assertNull(baseEntity.getId());
+    }
+
 }

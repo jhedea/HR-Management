@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Publicly accessible contract controller.
- * XXX: should add tests once users microservice is ready.
  */
 @Slf4j
 @RestController
@@ -52,8 +51,8 @@ public class ContractPublicController {
     ResponseEntity<ContractDto> getContract(@PathVariable UUID id) {
         ContractDto contract = contractRepository.findById(id).orElseThrow(ContractNotFoundException::new).getDto();
         UUID userId = authenticationService.getUserId();
-        if (contract.getEmployeeId().equals(userId)
-                || contract.getEmployerId().equals(userId)
+        if (contract.getContractParties().getEmployeeId().equals(userId)
+                || contract.getContractParties().getEmployerId().equals(userId)
                 || authenticationService.hasAtLeastRole(Role.HR)) {
             return ResponseEntity.ok(contract);
         }
@@ -64,7 +63,7 @@ public class ContractPublicController {
     ResponseEntity<ContractDto> addContract(@RequestBody @Valid ContractDto contractDto) {
         // XXX: internal issue #1
         if (authenticationService.hasAtLeastRole(Role.HR)) {
-            contractDto.setEmployerId(authenticationService.getUserId());
+            contractDto.getContractParties().setEmployerId(authenticationService.getUserId());
             Contract contract = contractService.addContract(contractDto);
             return ResponseEntity.created(URI.create("/contract/" + contract.getId()))
                     .body(contract.getDto());
@@ -94,6 +93,4 @@ public class ContractPublicController {
         }
         throw new ActionNotAllowedException("You are not allowed to modify a contract");
     }
-
-
 }

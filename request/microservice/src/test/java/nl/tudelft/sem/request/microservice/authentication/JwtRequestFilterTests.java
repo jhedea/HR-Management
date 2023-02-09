@@ -104,10 +104,8 @@ public class JwtRequestFilterTests {
 
         // Act
         jwtRequestFilter.doFilterInternal(mockRequest, mockResponse, mockFilterChain);
-
         // Assert
-        assertThat(SecurityContextHolder.getContext().getAuthentication())
-                .isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     private static Stream<Arguments> tokenVerificationExceptionGenerator() {
@@ -128,8 +126,7 @@ public class JwtRequestFilterTests {
         jwtRequestFilter.doFilterInternal(mockRequest, mockResponse, mockFilterChain);
 
         // Assert
-        assertThat(SecurityContextHolder.getContext().getAuthentication())
-                .isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test

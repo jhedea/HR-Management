@@ -28,7 +28,7 @@ public class SalaryScaleService {
      * @return edited salary scale
      */
     public SalaryScale editMinimumPay(SalaryScale salaryScale, StringDto minimumPay) {
-        salaryScale.setMinimumPay(new BigDecimal(minimumPay.getData()));
+        salaryScale.getPay().setMinimumPay(new BigDecimal(minimumPay.getData()));
         salaryScaleRepository.save(salaryScale);
         return salaryScale;
     }
@@ -41,7 +41,7 @@ public class SalaryScaleService {
      * @return edited salary scale
      */
     public SalaryScale editMaximumPay(SalaryScale salaryScale, StringDto maximumPay) {
-        salaryScale.setMaximumPay(new BigDecimal(maximumPay.getData()));
+        salaryScale.getPay().setMaximumPay(new BigDecimal(maximumPay.getData()));
         salaryScaleRepository.save(salaryScale);
         return salaryScale;
     }

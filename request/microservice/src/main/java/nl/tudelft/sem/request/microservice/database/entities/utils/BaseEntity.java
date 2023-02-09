@@ -45,14 +45,10 @@ public abstract class BaseEntity<D extends Dto> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || id == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
             return false;
         }
-        BaseEntity<?> that = (BaseEntity<?>) o;
-        return Objects.equals(id, that.id);
+        return this == o || Objects.equals(id, ((BaseEntity<?>) o).id);
     }
 
     @Override

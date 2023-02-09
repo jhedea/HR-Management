@@ -16,8 +16,8 @@ class SalaryScaleTest {
                 .step(new BigDecimal("0.01"))
                 .build();
         SalaryScale salaryScale = new SalaryScale(dto);
-        assertEquals(salaryScale.getMinimumPay(), dto.getMinimumPay());
-        assertEquals(salaryScale.getMaximumPay(), dto.getMaximumPay());
+        assertEquals(salaryScale.getPay().getMinimumPay(), dto.getMinimumPay());
+        assertEquals(salaryScale.getPay().getMaximumPay(), dto.getMaximumPay());
         assertEquals(salaryScale.getStep(), dto.getStep());
     }
 

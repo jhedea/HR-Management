@@ -1,13 +1,13 @@
 package nl.tudelft.sem.request.microservice.authentication;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import java.io.IOException;
-import java.util.List;
+import java.util.ArrayList;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,8 +24,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * </p>
  */
 @Component
+@Slf4j
 public class JwtRequestFilter extends OncePerRequestFilter {
-
+    private static boolean flag = false;
+    private static String token = "";
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
     public static final String AUTHORIZATION_AUTH_SCHEME = "Bearer";
@@ -37,6 +39,35 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtTokenVerifier = jwtTokenVerifier;
     }
 
+
+    protected String helper(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
+
+        if (authorizationHeader != null) {
+            return authorizationHeader;
+        } else {
+            throw new NullPointerException();
+        }
+    }
+
+    protected void doFilterInternalHelper(HttpServletRequest request, HttpServletResponse response) {
+        String authorizationHeader = helper(request);
+        String[] directives;
+        if (authorizationHeader != null) {
+            directives = authorizationHeader.split(" ");
+        } else {
+            throw new NullPointerException();
+        }
+        flag = false;
+        token = "";
+        if (directives.length == 2 && directives[0].equals(AUTHORIZATION_AUTH_SCHEME)) {
+            token = directives[1];
+            flag = true;
+        }
+    }
+
+
+
     /**
      * This filter will verify and authenticate a JWT token if a valid authorization header is set.
      *
@@ -47,45 +78,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
      * @throws IOException      Exception
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        // Get authorization header
-        String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-
-        // Check if an authorization header is set
-        if (authorizationHeader != null) {
-            String[] directives = authorizationHeader.split(" ");
-
-            // Check for the correct auth scheme
-            if (directives.length == 2 && directives[0].equals(AUTHORIZATION_AUTH_SCHEME)) {
-                String token = directives[1];
-
-                try {
-                    if (jwtTokenVerifier.validateToken(token)) {
-                        String netId = jwtTokenVerifier.getNetIdFromToken(token);
-                        var authenticationToken = new UsernamePasswordAuthenticationToken(
-                                netId,
-                                null, List.of() // no credentials and no authorities
-                        );
-                        authenticationToken.setDetails(new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
-
-                        // After setting the Authentication in the context, we specify
-                        // that the current user is authenticated. So it passes the
-                        // Spring Security Configurations successfully.
-                        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                    }
-
-                } catch (ExpiredJwtException e) {
-                    System.err.println("JWT token has expired.");
-                } catch (IllegalArgumentException | JwtException e) {
-                    System.err.println("Unable to parse JWT token");
-                }
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
+        request.getHeader(AUTHORIZATION_HEADER);
+        try {
+            doFilterInternalHelper(request, response);
+            if (flag && jwtTokenVerifier.validateToken(token)) {
+                String netId = jwtTokenVerifier.getNetIdFromToken(token);
+                var authenticationToken = new UsernamePasswordAuthenticationToken(netId,
+                        null, new ArrayList<>() // no credentials and no authorities
+                );
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource()
+                        .buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
-            System.err.println("Invalid authorization header");
+        } catch (Exception e) {
+            log.debug("Invalid token", e);
         }
-
         filterChain.doFilter(request, response);
     }
 }

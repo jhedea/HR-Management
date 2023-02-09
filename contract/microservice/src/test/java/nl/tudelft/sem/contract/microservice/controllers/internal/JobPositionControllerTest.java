@@ -2,6 +2,7 @@ package nl.tudelft.sem.contract.microservice.controllers.internal;
 
 import static nl.tudelft.sem.contract.microservice.TestHelpers.getUuid;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import nl.tudelft.sem.contract.commons.entities.utils.StringDto;
 import nl.tudelft.sem.contract.microservice.TestHelpers;
 import nl.tudelft.sem.contract.microservice.database.entities.JobPosition;
 import nl.tudelft.sem.contract.microservice.database.entities.SalaryScale;
+import nl.tudelft.sem.contract.microservice.database.entities.utils.Pay;
 import nl.tudelft.sem.contract.microservice.database.repositories.JobPositionRepository;
 import nl.tudelft.sem.contract.microservice.database.repositories.SalaryScaleRepository;
 import nl.tudelft.sem.contract.microservice.services.JobPositionService;
@@ -57,8 +59,7 @@ public class JobPositionControllerTest {
     private SalaryScale getSampleSalaryScale(int id) {
         return SalaryScale.builder()
                 .id(getUuid(id))
-                .minimumPay(new BigDecimal("34" + id + ".12"))
-                .maximumPay(new BigDecimal("35" + id + ".12"))
+                .pay(new Pay(new BigDecimal("34" + id + ".12"), new BigDecimal("35" + id + ".12")))
                 .step(new BigDecimal("0.0" + id))
                 .build();
     }
@@ -85,7 +86,7 @@ public class JobPositionControllerTest {
 
     @Test
     void addNewJobPosition() throws Exception {
-        SalaryScale salaryScale = getSampleSalaryScale(1);
+        SalaryScale salaryScale = getSampleSalaryScale(2);
 
         JobPosition jobPosition = JobPosition.builder()
                 .id(getUuid(1))
@@ -99,6 +100,44 @@ public class JobPositionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(jobPosition.getDto())))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void deleteJobTestFailsMutant() throws Exception {
+        SalaryScale salaryScale = getSampleSalaryScale(2);
+
+        JobPosition jobPosition = JobPosition.builder()
+                .id(getUuid(1))
+                .name("big boss")
+                .salaryScale(salaryScale)
+                .build();
+
+        when(jobPositionRepository.findById(any())).thenReturn(Optional.of(jobPosition));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/internal/job-position/{id}", TestHelpers.getUuid(1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(jobPosition.getDto())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteJobTestSucceedsMutant() throws Exception {
+        SalaryScale salaryScale = getSampleSalaryScale(2);
+
+        JobPosition jobPosition = JobPosition.builder()
+                .id(getUuid(1))
+                .name("big boss")
+                .salaryScale(salaryScale)
+                .build();
+
+        when(jobPositionRepository.findById(any())).thenReturn(Optional.of(jobPosition));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/internal/job-position/{id}", TestHelpers.getUuid(1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(jobPosition.getDto())))
+                        .andExpect(status().isOk())
+                        .andExpect(content().json(objectMapper.writeValueAsString(jobPosition.getDto())));
+        verify(jobPositionRepository).deleteById(TestHelpers.getUuid(1));
     }
 
     @Test
@@ -190,7 +229,7 @@ public class JobPositionControllerTest {
                 .build();
 
         when(jobPositionRepository.findById(getUuid(1))).thenReturn(Optional.of(jobPosition));
-        when(jobPositionService.editSalaryScale(jobPosition, newSalaryScale.getDto())).thenReturn(changedJobPosition);
+        when(jobPositionService.editSalaryScale(any(), any())).thenReturn(changedJobPosition);
 
         this.mockMvc.perform(MockMvcRequestBuilders
                         .put("/internal/job-position/{id}/edit-salary-scale", getUuid(1))

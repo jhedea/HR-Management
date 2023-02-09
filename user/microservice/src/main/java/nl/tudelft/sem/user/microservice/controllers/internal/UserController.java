@@ -9,8 +9,9 @@ import nl.tudelft.sem.user.commons.entities.utils.Role;
 import nl.tudelft.sem.user.commons.entities.utils.RoleDto;
 import nl.tudelft.sem.user.commons.entities.utils.UserDto;
 import nl.tudelft.sem.user.commons.entities.utils.UserModify;
+import nl.tudelft.sem.user.commons.entities.utils.UuidDto;
 import nl.tudelft.sem.user.microservice.authentication.AuthManager;
-import nl.tudelft.sem.user.microservice.database.entities.utils.UserEntity;
+import nl.tudelft.sem.user.microservice.database.entities.UserEntity;
 import nl.tudelft.sem.user.microservice.exceptions.ActionNotAllowedException;
 import nl.tudelft.sem.user.microservice.exceptions.UserNotFoundException;
 import nl.tudelft.sem.user.microservice.service.UserService;
@@ -56,7 +57,7 @@ public class UserController {
     public ResponseEntity<UserDto> getUserDetail(@PathVariable String id) {
         UserEntity user = userEntityRepository.findById(UUID.fromString(id)).orElseThrow(UserNotFoundException::new);
         UserDto userDto = user.getDto();
-        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     /**
@@ -66,9 +67,9 @@ public class UserController {
      * @return the role of the user with the given id
      */
     @GetMapping("/getRoleByUUID/{id}")
-    public ResponseEntity<Role> getRoleByUuid(@PathVariable String id) {
+    public ResponseEntity<RoleDto> getRoleByUuid(@PathVariable String id) {
         return ResponseEntity.ok(userEntityRepository
-                .findById(UUID.fromString(id)).orElseThrow(UserNotFoundException::new).getRole());
+                .findById(UUID.fromString(id)).orElseThrow(UserNotFoundException::new).getRole().getDto());
     }
 
     /**
@@ -78,9 +79,9 @@ public class UserController {
      * @return the role of the user with the given id
      */
     @GetMapping("/getRoleByNetId/{netId}")
-    public ResponseEntity<Role> getRoleByNetId(@PathVariable String netId) {
+    public ResponseEntity<RoleDto> getRoleByNetId(@PathVariable String netId) {
         return ResponseEntity.ok(userEntityRepository
-                .findByNetId(netId).orElseThrow(UserNotFoundException::new).getRole());
+                .findByNetId(netId).orElseThrow(UserNotFoundException::new).getRole().getDto());
     }
 
     /**
@@ -90,9 +91,9 @@ public class UserController {
      * @return UUID
      */
     @GetMapping("/getUUID/{netId}")
-    public ResponseEntity<UUID> getUuid(@PathVariable String netId) {
-
-        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getId());
+    public ResponseEntity<UuidDto> getUuid(@PathVariable String netId) {
+        return ResponseEntity.ok(
+                new UuidDto(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getId()));
     }
 
     /**
@@ -103,7 +104,8 @@ public class UserController {
      */
     @GetMapping("/getUserDto/{netId}")
     public ResponseEntity<UserDto> getUserDto(@PathVariable String netId) {
-        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getDto());
+        return ResponseEntity.ok(
+                userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getDto());
     }
 
     /**
@@ -115,7 +117,7 @@ public class UserController {
     public ResponseEntity<UserDto> getNetId(@PathVariable String netId) {
         UserEntity user = userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new);
         UserDto userDto = user.getDto();
-        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     /**
@@ -127,7 +129,7 @@ public class UserController {
     public ResponseEntity<List<String>> getAllNetIds() {
 
         List<UserEntity> netIds = userEntityRepository.findAll();
-        return new ResponseEntity<List<String>>(netIds.stream().map(UserEntity::getNetId)
+        return new ResponseEntity<>(netIds.stream().map(UserEntity::getNetId)
                 .collect(Collectors.toList()), HttpStatus.OK);
     }
 
@@ -148,14 +150,8 @@ public class UserController {
             user = new UserEntity(netId, Role.CANDIDATE, "", "", "", "", "", "");
         }
         userService.addUser(user);
-        return new ResponseEntity<UserDto>(user.getDto(), HttpStatus.OK);
+        return new ResponseEntity<>(user.getDto(), HttpStatus.OK);
     }
-    /*
-    @GetMapping("/getUUIDbasedOnTheNetId/{netId}")
-    public ResponseEntity<UUID> getUuidByNetId(@PathVariable String netId) {
-        return ResponseEntity.ok(userEntityRepository.findByNetId(netId).orElseThrow(UserNotFoundException::new).getId());
-    }
-    */
 
     /**
      * updates User with all attributes through a JSON format of the UserDto.
@@ -175,11 +171,9 @@ public class UserController {
             }
             UserEntity userUpdated = userService.updateUser(update);
             UserDto userDto = userUpdated.getDto();
-            return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+            return new ResponseEntity<>(userDto, HttpStatus.OK);
         } catch (Exception e) {
             throw new UserNotFoundException("The user you are trying to update was not found");
         }
-
     }
-
 }

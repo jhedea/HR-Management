@@ -3,7 +3,7 @@ package nl.tudelft.sem.request.microservice;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import nl.tudelft.sem.request.commons.entities.RequestStatus;
-import nl.tudelft.sem.request.microservice.database.entities.Request;
+import nl.tudelft.sem.request.microservice.database.entities.GeneralRequest;
 
 public class TestUtils {
     static final UUID id = UUID.fromString("58028d7a-21e7-461e-bef9-f9432ad611cc");
@@ -13,8 +13,8 @@ public class TestUtils {
      *
      * @return Generated request.
      */
-    public static Request defaultRequest() {
-        return Request.builder()
+    public static GeneralRequest defaultRequest() {
+        return GeneralRequest.builder()
                 .id(id)
                 .status(RequestStatus.OPEN)
                 .requestBody("test request")

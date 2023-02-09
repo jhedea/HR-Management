@@ -1,20 +1,28 @@
 package nl.tudelft.sem.contract.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import nl.tudelft.sem.contract.commons.entities.utils.Dto;
 import nl.tudelft.sem.contract.commons.entities.utils.Views;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @JsonView(Views.Public.class)
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class JobPositionDto implements Dto {
     /**
      * The ID of the job position.
@@ -40,6 +48,26 @@ public class JobPositionDto implements Dto {
 
     public static JobPositionDtoBuilder builder() {
         return new JobPositionDtoBuilder();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        JobPositionDto that = (JobPositionDto) o;
+        return Objects.equals(id, that.id)
+                && Objects.equals(name, that.name)
+                && Objects.equals(contracts, that.contracts)
+                && Objects.equals(salaryScale, that.salaryScale);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, contracts, salaryScale);
     }
 
     public static class JobPositionDtoBuilder {

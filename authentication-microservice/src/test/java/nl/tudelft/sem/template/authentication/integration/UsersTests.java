@@ -71,8 +71,8 @@ public class UsersTests {
     @Autowired
     private transient UserRepository userRepository;
 
-    @Mock
-    private transient ClientProvider clientProvider;
+    @MockBean
+    private transient ClientProvider mockClientProvider;
 
     @Test
     public void register_withValidData_worksCorrectly() throws Exception {
@@ -88,7 +88,7 @@ public class UsersTests {
 
         UserClient userClient = mock(UserClient.class);
         UserData userData = mock(UserData.class);
-        when(clientProvider.userClient()).thenReturn(userClient);
+        when(mockClientProvider.userClient()).thenReturn(userClient);
         when(userClient.user()).thenReturn(userData);
 
         UserDto userDto = UserDto.builder().build();

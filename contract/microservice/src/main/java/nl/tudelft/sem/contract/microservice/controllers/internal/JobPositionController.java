@@ -103,5 +103,4 @@ public class JobPositionController {
         JobPosition jobPosition = jobPositionRepository.findById(id).orElseThrow(JobPositionNotFoundException::new);
         return ResponseEntity.ok(jobPositionService.editSalaryScale(jobPosition, salaryScaleDto).getDto());
     }
-
 }

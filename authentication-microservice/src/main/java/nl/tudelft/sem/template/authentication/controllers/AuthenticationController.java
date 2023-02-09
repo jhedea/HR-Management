@@ -1,7 +1,6 @@
 package nl.tudelft.sem.template.authentication.controllers;
 
-import java.util.concurrent.CompletableFuture;
-import javax.annotation.PostConstruct;
+import java.util.UUID;
 import nl.tudelft.sem.template.authentication.authentication.JwtTokenGenerator;
 import nl.tudelft.sem.template.authentication.authentication.JwtUserDetailsService;
 import nl.tudelft.sem.template.authentication.domain.providers.implementations.ClientProvider;
@@ -36,7 +35,7 @@ public class AuthenticationController {
 
     private final transient RegistrationService registrationService;
 
-    private final transient UserClient client;
+    private final transient ClientProvider clientProvider;
 
     /**
      * Instantiates a new UsersController.
@@ -56,10 +55,7 @@ public class AuthenticationController {
         this.jwtTokenGenerator = jwtTokenGenerator;
         this.jwtUserDetailsService = jwtUserDetailsService;
         this.registrationService = registrationService;
-
-        this.client = clientProvider.userClient();
-
-
+        this.clientProvider = clientProvider;
     }
 
     /**
@@ -67,12 +63,9 @@ public class AuthenticationController {
      *
      * @param request The login model
      * @return JWT token if the login is successful
-     * @throws Exception if the user does not exist or the password is incorrect
      */
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponseModel> authenticate(@RequestBody AuthenticationRequestModel request)
-            throws Exception {
-
+    public ResponseEntity<AuthenticationResponseModel> authenticate(@RequestBody AuthenticationRequestModel request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -97,18 +90,13 @@ public class AuthenticationController {
      * @throws Exception if a user with this netid already exists
      */
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody RegistrationRequestModel request) throws Exception {
-
+    public ResponseEntity<UUID> register(@RequestBody RegistrationRequestModel request) throws Exception {
         try {
-            NetId netId = new NetId(request.getNetId());
-            Password password = new Password(request.getPassword());
-            registrationService.registerUser(netId, password);
-
+            registrationService.registerUser(new NetId(request.getNetId()),
+                    new Password(request.getPassword()));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        var a = CompletableFuture.completedFuture(client.user().createUser(request.getNetId()));
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(clientProvider.userClient().user().createUser(request.getNetId()).join().getId());
     }
 }
